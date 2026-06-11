@@ -73,7 +73,7 @@
     "@adonisjs/transmit": "2.0.2",
     "@adonisjs/transmit-client": "1.1.0",
     "@adonisjs/vite": "4.0.0",
-    "@chonkiejs/core": "0.0.7",
+    "@chonkiejs/core": "0.0.10",
     "@headlessui/react": "2.2.9",
     "@inertiajs/react": "2.3.13",
     "@markdoc/markdoc": "0.5.4",
