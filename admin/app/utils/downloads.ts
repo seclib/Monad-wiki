@@ -8,6 +8,12 @@ import { deleteFileIfExists, ensureDirectoryExists, getFileStatsIfExists } from 
 import { createWriteStream } from 'fs'
 import { rename } from 'fs/promises'
 import path from 'path'
+import { assertProjectWritePath } from './paths.js'
+import {
+  createEncryptedStorageWriteStream,
+  type EncryptedStorageWriteStream,
+  isStoragePath,
+} from './storage_crypto.js'
 
 /**
  * Perform a resumable download with progress tracking
@@ -25,20 +31,26 @@ export async function doResumableDownload({
   forceNew = false,
   allowedMimeTypes,
 }: DoResumableDownloadParams): Promise<string> {
-  const dirname = path.dirname(filepath)
+  const targetPath = assertProjectWritePath(filepath)
+  const encryptedTarget = isStoragePath(targetPath)
+  const dirname = path.dirname(targetPath)
   await ensureDirectoryExists(dirname)
 
   // Stage download to a .tmp file so consumers (e.g. Kiwix) never see a partial file
-  const tempPath = filepath + '.tmp'
+  const tempPath = assertProjectWritePath(`${targetPath}.tmp`)
 
   // Check if partial .tmp file exists for resume
   let startByte = 0
   let appendMode = false
 
-  const existingStats = await getFileStatsIfExists(tempPath)
-  if (existingStats && !forceNew) {
-    startByte = Number(existingStats.size)
-    appendMode = true
+  if (encryptedTarget) {
+    await deleteFileIfExists(tempPath)
+  } else {
+    const existingStats = await getFileStatsIfExists(tempPath)
+    if (existingStats && !forceNew) {
+      startByte = Number(existingStats.size)
+      appendMode = true
+    }
   }
 
   // Get file info with HEAD request first
@@ -53,10 +65,26 @@ export async function doResumableDownload({
   // already in every binary-content allowlist we use (ZIM, PMTILES, base assets).
   // Without this default, the validator below throws `MIME type  is not allowed`
   // and breaks all downloads from kiwix's primary host (#848).
-  const contentType =
-    headResponse.headers['content-type'] || 'application/octet-stream'
-  const totalBytes = parseInt(headResponse.headers['content-length'] || '0')
-  const supportsRangeRequests = headResponse.headers['accept-ranges'] === 'bytes'
+  const rawContentType = headResponse.headers['content-type']
+  const contentType = Array.isArray(rawContentType)
+    ? rawContentType.join(',')
+    : typeof rawContentType === 'string'
+      ? rawContentType
+      : 'application/octet-stream'
+
+  const rawContentLength = headResponse.headers['content-length']
+  const totalBytes = parseInt(
+    Array.isArray(rawContentLength)
+      ? (rawContentLength[0] ?? '0')
+      : typeof rawContentLength === 'string' || typeof rawContentLength === 'number'
+        ? String(rawContentLength)
+        : '0'
+  )
+
+  const rawAcceptRanges = headResponse.headers['accept-ranges']
+  const supportsRangeRequests = Array.isArray(rawAcceptRanges)
+    ? rawAcceptRanges.includes('bytes')
+    : rawAcceptRanges === 'bytes'
 
   // If allowedMimeTypes is provided, check content type
   if (allowedMimeTypes && allowedMimeTypes.length > 0) {
@@ -67,18 +95,18 @@ export async function doResumableDownload({
   }
 
   // If final file already exists at correct size, return early (idempotent)
-  const finalFileStats = await getFileStatsIfExists(filepath)
+  const finalFileStats = await getFileStatsIfExists(targetPath)
   if (finalFileStats && Number(finalFileStats.size) === totalBytes && totalBytes > 0 && !forceNew) {
-    return filepath
+    return targetPath
   }
 
   // If .tmp file is already at correct size (complete but never renamed), just rename it
-  if (startByte === totalBytes && totalBytes > 0 && !forceNew) {
-    await rename(tempPath, filepath)
+  if (!encryptedTarget && startByte === totalBytes && totalBytes > 0 && !forceNew) {
+    await rename(tempPath, targetPath)
     if (onComplete) {
-      await onComplete(url, filepath)
+      await onComplete(url, targetPath)
     }
-    return filepath
+    return targetPath
   }
 
   // If server doesn't support range requests and we have a partial .tmp file, delete it
@@ -164,9 +192,11 @@ export async function doResumableDownload({
       },
     })
 
-    const writeStream = createWriteStream(tempPath, {
-      flags: appendMode ? 'a' : 'w',
-    })
+    const writeStream = encryptedTarget
+      ? createEncryptedStorageWriteStream(tempPath, { plaintextLength: totalBytes })
+      : createWriteStream(tempPath, {
+          flags: appendMode ? 'a' : 'w',
+        })
 
     const cleanup = (error?: Error) => {
       clearStallTimer()
@@ -189,12 +219,15 @@ export async function doResumableDownload({
     writeStream.on('finish', async () => {
       clearStallTimer()
       try {
+        if (encryptedTarget) {
+          await (writeStream as EncryptedStorageWriteStream).storageDone
+        }
         // Atomically move the completed .tmp file to the final path
-        await rename(tempPath, filepath)
+        await rename(tempPath, targetPath)
       } catch (renameError) {
         // A parallel job may have completed the same file first — treat as success
         // if the destination already exists at the expected size.
-        const existing = await getFileStatsIfExists(filepath)
+        const existing = await getFileStatsIfExists(targetPath)
         if (existing && Number(existing.size) === totalBytes && totalBytes > 0) {
           // fall through to resolve
         } else {
@@ -212,9 +245,9 @@ export async function doResumableDownload({
         })
       }
       if (onComplete) {
-        await onComplete(url, filepath)
+        await onComplete(url, targetPath)
       }
-      resolve(filepath)
+      resolve(targetPath)
     })
 
     // Start stall timer and pipe: response -> progressStream -> writeStream

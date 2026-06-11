@@ -19,14 +19,14 @@ export function getAllDiskDisplayItems(
 ): DiskDisplayItem[] {
   const validDisks = disks?.filter((d) => d.totalSize > 0) || []
 
-  // If /app/storage is backed by a network filesystem (NFS/CIFS), it won't
+  // If project-local storage is backed by a network filesystem (NFS/CIFS), it won't
   // appear in the block-device list. Prepend it so NAS and OS disk are both
-  // shown. Local-disk-backed /app/storage is already reported in disk[] and
+  // shown. Local-disk-backed storage is already reported in disk[] and
   // fsSize[], so skip it here to avoid a phantom "NAS Storage" entry.
   const NETWORK_FS_TYPES = new Set(['nfs', 'nfs4', 'cifs', 'smbfs', 'smb2', 'smb3'])
   const storageMount = fsSize?.find(
     (fs) =>
-      fs.mount === '/app/storage' && fs.size > 0 && NETWORK_FS_TYPES.has(fs.type?.toLowerCase())
+      fs.mount === 'storage' && fs.size > 0 && NETWORK_FS_TYPES.has(fs.type?.toLowerCase())
   )
   const storageMountItem: DiskDisplayItem[] = storageMount
     ? [
@@ -61,7 +61,7 @@ export function getAllDiskDisplayItems(
     const seen = new Set<number>()
     const uniqueFs = fsSize.filter((fs) => {
       if (fs.size <= 0 || seen.has(fs.size)) return false
-      if (storageMount && fs.mount === '/app/storage') return false
+      if (storageMount && fs.mount === 'storage') return false
       seen.add(fs.size)
       return true
     })
@@ -89,11 +89,11 @@ export function getPrimaryDiskInfo(
   disks: MonadDiskInfo[] | undefined,
   fsSize: Systeminformation.FsSizeData[] | undefined
 ): { totalSize: number; totalUsed: number } | null {
-  // First, check if /app/storage is on a dedicated filesystem (e.g. NFS mount).
+  // First, check if project-local storage is on a dedicated filesystem (e.g. NFS mount).
   // This is the most accurate source since it reflects the actual backing
   // store for MONAD content, regardless of whether it's a local disk or
   // network-attached storage.
-  const storageMount = fsSize?.find((fs) => fs.mount === '/app/storage' && fs.size > 0)
+  const storageMount = fsSize?.find((fs) => fs.mount === 'storage' && fs.size > 0)
   if (storageMount) {
     return { totalSize: storageMount.size, totalUsed: storageMount.used }
   }
@@ -101,7 +101,7 @@ export function getPrimaryDiskInfo(
   const validDisks = disks?.filter((d) => d.totalSize > 0) || []
   if (validDisks.length > 0) {
     const diskWithRoot = validDisks.find((d) =>
-      d.filesystems?.some((fs) => fs.mount === '/' || fs.mount === '/storage')
+      d.filesystems?.some((fs) => fs.mount === 'storage')
     )
     const primary =
       diskWithRoot || validDisks.reduce((a, b) => (b.totalSize > a.totalSize ? b : a))

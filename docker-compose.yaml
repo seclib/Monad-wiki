@@ -1,68 +1,96 @@
-name: monad
+name: ${COMPOSE_PROJECT_NAME:-monad}
+
+# Production-oriented default Compose file for MONAD.
+#
+# Public ports:
+# - caddy: ${MONAD_HTTP_BIND:-127.0.0.1}:${MONAD_HTTP_PORT:-80} -> 8080/tcp
+#
+# Internal-only services:
+# - admin: 8050/tcp on the Compose network
+# - mysql: 3306/tcp on the Compose network
+# - redis: 6379/tcp on the Compose network
+#
+# Security stance:
+# - no Docker daemon socket mount in the default stack
+# - no direct admin, MySQL, or Redis host ports
+# - all host-side runtime data is stored under project-local folders
+# - secrets are required from .env
+# - optional host metrics collector is behind the "host-metrics" profile
+
+x-service-defaults: &service-defaults
+  restart: unless-stopped
+  security_opt:
+    - no-new-privileges:true
 
 services:
   admin:
-    image: ghcr.io/crosstalk-solutions/project-nomad:latest
-    pull_policy: missing
+    <<: *service-defaults
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ghcr.io/seclib/monad:${MONAD_IMAGE_TAG:-local}
     container_name: monad_admin
-    restart: unless-stopped
 
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
     expose:
-      - "8050"
+      - "${ADMIN_INTERNAL_PORT:-8050}"
 
     volumes:
-      - /opt/monad/storage:/app/storage
-      - /opt/monad/vault:/vault
-      - /var/run/docker.sock:/var/run/docker.sock
-      - monad-update-shared:/app/update-shared
+      - ${MONAD_HOST_STORAGE_PATH:-./storage}:/app/storage
+      - ${MONAD_HOST_LOGS_PATH:-./logs}:/app/logs
+      - ${MONAD_HOST_CACHE_PATH:-./cache}:/app/cache
+      # Runtime MONAD config must not be mounted over /app/config.
+      # /app/config contains AdonisJS compiled application config files.
+      - ${MONAD_HOST_CONFIG_PATH:-./config}:/app/runtime/config
+      - ${MONAD_HOST_MODELS_PATH:-./models}:/app/models
+      - ${MONAD_HOST_DATA_PATH:-./data}:/app/data
 
     environment:
-      - NODE_ENV=production
-      - PORT=8050
-      - LOG_LEVEL=info
-      - APP_AUTHOR=seclib
-      - PROJECT_NAME=MONAD
-      - PROJECT_REGION=Reunion
-      - PROJECT_TAGLINE=Optimisé pour La Réunion
-      - PROJECT_DESCRIPTION=Système local de gestion et de connaissance
-      - DEFAULT_LANGUAGE=fr
-      - APP_LOCALE=fr_FR
-      - DATE_FORMAT=DD/MM/YYYY
-
-      # ⚠️ CONFIG OBLIGATOIRE
-      - APP_KEY=ujFhYN8ahpY4ko8PThD/LrByad+4CnLU5HQ9emG/N/o=
-      - URL=http://monad.local
-      - DB_PASSWORD=replaceme
-
-      # 🌐 Serveur
-      - HOST=0.0.0.0
-
-      # 🗄️ Base de données
-      - DB_HOST=mysql
-      - DB_PORT=3306
-      - DB_DATABASE=monad
-      - DB_USER=monad_user
-      - DB_NAME=monad
-      - DB_SSL=false
-
-      # ⚡ Redis
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-
-      # 🌍 LOCALISATION (Réunion)
-      - TZ=Indian/Reunion
-      - LANG=fr_FR.UTF-8
-      - LC_ALL=fr_FR.UTF-8
-
-      # 🧠 IA → FR par défaut
-      - SYSTEM_PROMPT=Tu es l'assistant IA de MONAD pour La Réunion. Tu réponds toujours en français clair, naturel et structuré, avec le contexte local de La Réunion lorsque c'est pertinent, sauf demande explicite contraire.
-
-      - DISABLE_COMPRESSION=false
-      - OLLAMA_BASE_URL=http://host.docker.internal:11434
-      - VAULT_PATH=/vault
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: ${ADMIN_INTERNAL_PORT:-8050}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      APP_AUTHOR: ${APP_AUTHOR:-seclib}
+      PROJECT_NAME: ${PROJECT_NAME:-MONAD}
+      PROJECT_REGION: ${PROJECT_REGION:-Reunion}
+      PROJECT_TAGLINE: ${PROJECT_TAGLINE:-Optimisé pour La Réunion}
+      PROJECT_DESCRIPTION: ${PROJECT_DESCRIPTION:-Système local de gestion et de connaissance}
+      DEFAULT_LANGUAGE: ${DEFAULT_LANGUAGE:-fr}
+      APP_LOCALE: ${APP_LOCALE:-fr_FR}
+      DATE_FORMAT: ${DATE_FORMAT:-DD/MM/YYYY}
+      APP_KEY: ${APP_KEY:?Set APP_KEY in .env}
+      URL: ${URL:-http://monad.local}
+      HOST: 0.0.0.0
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_DATABASE: ${DB_DATABASE:-monad}
+      DB_USER: ${DB_USER:-monad_user}
+      DB_NAME: ${DB_NAME:-monad}
+      DB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
+      DB_SSL: ${DB_SSL:-false}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      TZ: ${TZ:-Indian/Reunion}
+      LANG: ${LANG:-fr_FR.UTF-8}
+      LC_ALL: ${LC_ALL:-fr_FR.UTF-8}
+      SYSTEM_PROMPT: ${SYSTEM_PROMPT:-Tu es l'assistant IA de MONAD pour La Réunion. Tu réponds toujours en français clair, naturel et structuré, avec le contexte local de La Réunion lorsque c'est pertinent, sauf demande explicite contraire.}
+      DISABLE_COMPRESSION: ${DISABLE_COMPRESSION:-false}
+      MONAD_OFFLINE_MODE: ${MONAD_OFFLINE_MODE:-true}
+      MONAD_API_URL: ${MONAD_API_URL:-https://api.monad.local}
+      MONAD_BENCHMARK_API_URL: ${MONAD_BENCHMARK_API_URL:-https://benchmark.monad.local/api/v1}
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      MONAD_PROJECT_ROOT: ${MONAD_PROJECT_ROOT:-.}
+      MONAD_STORAGE_PATH: ${MONAD_STORAGE_PATH:-storage}
+      MONAD_LOGS_PATH: ${MONAD_LOGS_PATH:-logs}
+      MONAD_CACHE_PATH: ${MONAD_CACHE_PATH:-cache}
+      MONAD_CONFIG_PATH: ${MONAD_CONFIG_PATH:-runtime/config}
+      MONAD_MODELS_PATH: ${MONAD_MODELS_PATH:-models}
+      MONAD_DATA_PATH: ${MONAD_DATA_PATH:-data}
+      MONAD_ENCRYPTION_KEY: ${MONAD_ENCRYPTION_KEY:-}
+      MONAD_ENCRYPTION_PASSWORD: ${MONAD_ENCRYPTION_PASSWORD:-}
+      VAULT_PATH: ${VAULT_PATH:-storage/vault}
+      PMTILES_BINARY_PATH: ${PMTILES_BINARY_PATH:-bin/pmtiles}
 
     depends_on:
       mysql:
@@ -71,50 +99,62 @@ services:
         condition: service_healthy
 
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8050/api/health"]
+      test:
+        [
+          "CMD-SHELL",
+          "curl -fsS http://localhost:${ADMIN_INTERNAL_PORT:-8050}/api/health || exit 1",
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
+
   caddy:
-    image: caddy:latest
+    <<: *service-defaults
+    image: ${CADDY_IMAGE:-caddy:2.8.4-alpine}
     container_name: monad_caddy
-    restart: unless-stopped
+    command: ["caddy", "run", "--config", "/config/Caddyfile", "--adapter", "caddyfile"]
+
+    # Only Caddy is exposed on the host.
+    # Set MONAD_HTTP_BIND=0.0.0.0 to allow LAN access explicitly.
     ports:
-      - "80:80"
+      - "${MONAD_HTTP_BIND:-127.0.0.1}:${MONAD_HTTP_PORT:-80}:${CADDY_INTERNAL_PORT:-8080}"
+
+    environment:
+      CADDY_INTERNAL_PORT: ${CADDY_INTERNAL_PORT:-8080}
+      ADMIN_INTERNAL_PORT: ${ADMIN_INTERNAL_PORT:-8050}
+
     volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ${MONAD_HOST_CADDY_DATA_PATH:-./data/caddy/data}:/data
+      - ${MONAD_HOST_CADDY_CONFIG_PATH:-./config/caddy}:/config
+
     depends_on:
       admin:
         condition: service_healthy
 
-  dozzle:
-    image: amir20/dozzle:v10.0
-    container_name: monad_dozzle
-    restart: unless-stopped
-
-    expose:
-      - "8080"
-
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-
-    environment:
-      - DOZZLE_ENABLE_ACTIONS=false
-      - DOZZLE_ENABLE_SHELL=false
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget -q --spider http://localhost:${CADDY_INTERNAL_PORT:-8080}/api/health || exit 1",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   mysql:
-    image: mysql:8.0
+    <<: *service-defaults
+    image: ${MYSQL_IMAGE:-mysql:8.0.40}
     container_name: monad_mysql
-    restart: unless-stopped
+    command: ["--datadir=/data/mysql"]
 
     environment:
-      - MYSQL_ROOT_PASSWORD=replaceme
-      - MYSQL_DATABASE=monad
-      - MYSQL_USER=monad_user
-      - MYSQL_PASSWORD=replaceme
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD in .env}
+      MYSQL_DATABASE: ${DB_DATABASE:-monad}
+      MYSQL_USER: ${DB_USER:-monad_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
 
     volumes:
-      - /opt/monad/mysql:/var/lib/mysql
+      - ${MONAD_HOST_MYSQL_DATA_PATH:-./data/mysql}:/data/mysql
 
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
@@ -123,12 +163,12 @@ services:
       retries: 10
 
   redis:
-    image: redis:7-alpine
+    <<: *service-defaults
+    image: ${REDIS_IMAGE:-redis:7.4.1-alpine}
     container_name: monad_redis
-    restart: unless-stopped
 
     volumes:
-      - /opt/monad/redis:/data
+      - ${MONAD_HOST_REDIS_DATA_PATH:-./data/redis}:/data
 
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
@@ -136,27 +176,26 @@ services:
       timeout: 10s
       retries: 3
 
-  updater:
-    image: ghcr.io/crosstalk-solutions/project-nomad-sidecar-updater:latest
-    pull_policy: missing
-    container_name: monad_updater
-    restart: unless-stopped
-
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - /opt/monad:/opt/monad
-      - monad-update-shared:/shared
-
   disk-collector:
-    image: ghcr.io/crosstalk-solutions/project-nomad-disk-collector:latest
-    pull_policy: missing
+    <<: *service-defaults
+    profiles:
+      - host-metrics
+    build:
+      context: ./install/sidecar-disk-collector
+      dockerfile: Dockerfile
+    image: ghcr.io/seclib/monad-disk-collector:${MONAD_DISK_COLLECTOR_IMAGE_TAG:-local}
     container_name: monad_disk_collector
-    restart: unless-stopped
+    read_only: true
+    cap_drop:
+      - ALL
 
+    # Optional: project-local storage metrics.
+    # Enable only when needed:
+    #   docker compose --profile host-metrics up -d
     volumes:
-      - /:/host:ro,rslave
-      - /opt/monad/storage:/storage
+      - ${MONAD_HOST_STORAGE_PATH:-./storage}:/app/storage:ro
+      - ${MONAD_HOST_CACHE_PATH:-./cache}:/app/cache
 
-volumes:
-  monad-update-shared:
-    driver: local
+    environment:
+      MONAD_STORAGE_PATH: storage
+      MONAD_CACHE_PATH: cache

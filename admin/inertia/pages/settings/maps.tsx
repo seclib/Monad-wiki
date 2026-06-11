@@ -59,7 +59,10 @@ export default function MapsManager(props: {
     queryFn: () => api.getGlobalMapInfo(),
     refetchOnWindowFocus: false,
   })
-  const globalMapAlreadyDownloaded = hasDownloadedGlobalMap(globalMapInfo?.key, props.maps.regionFiles)
+  const globalMapAlreadyDownloaded = hasDownloadedGlobalMap(
+    globalMapInfo?.key,
+    props.maps.regionFiles
+  )
 
   const downloadGlobalMap = useMutation({
     mutationFn: () => api.downloadGlobalMap(),
@@ -67,7 +70,8 @@ export default function MapsManager(props: {
       invalidateDownloads()
       addNotification({
         type: 'success',
-        message: 'Global map download has been queued. This is a large file (~125 GB) and may take a while.',
+        message:
+          'Global map download has been queued. This is a large file (~125 GB) and may take a while.',
       })
       closeAllModals()
     },
@@ -224,9 +228,9 @@ export default function MapsManager(props: {
         confirmLoading={downloadGlobalMap.isPending}
       >
         <p className="text-text-secondary">
-          This will download the full Protomaps global map ({formatBytes(globalMapInfo.size, 1)}, build {globalMapInfo.date}).
-          Covers the entire planet so you won't need individual region files.
-          Make sure you have enough disk space.
+          This will download the full Protomaps global map ({formatBytes(globalMapInfo.size, 1)},
+          build {globalMapInfo.date}). Covers the entire planet so you won't need individual region
+          files. Make sure you have enough disk space.
         </p>
       </StyledModal>,
       'confirm-global-map-download-modal'
@@ -255,7 +259,7 @@ export default function MapsManager(props: {
     openModal(
       <DownloadURLModal
         title="Download Map File"
-        suggestedURL="e.g. https://github.com/Crosstalk-Solutions/project-nomad-maps/raw/refs/heads/master/pmtiles/california.pmtiles"
+        suggestedURL="e.g. https://github.com/seclib/monad-maps/raw/refs/heads/main/pmtiles/california.pmtiles"
         onCancel={() => closeAllModals()}
         onPreflightSuccess={async (url) => {
           await downloadCustomFile(url)
@@ -285,11 +289,11 @@ export default function MapsManager(props: {
           <div className="flex items-center justify-between">
             <div className="flex flex-col">
               <h1 className="text-4xl font-semibold mb-2">Maps Manager</h1>
-              <p className="text-text-muted">Manage your stored map files and explore new regions!</p>
+              <p className="text-text-muted">
+                Manage your stored map files and explore new regions!
+              </p>
             </div>
-            <div className="flex space-x-4">
-
-            </div>
+            <div className="flex space-x-4"></div>
           </div>
           {!props.maps.baseAssetsExist && (
             <Alert

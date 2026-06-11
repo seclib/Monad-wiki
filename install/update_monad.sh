@@ -6,8 +6,8 @@
 
 # Script                | MONAD Update Script
 # Version               | 1.0.1
-# Author                | Crosstalk Solutions, LLC
-# Website               | https://crosstalksolutions.com
+# Author                | seclib
+# Website               | https://github.com/seclib/monad
 
 ###################################################################################################################################################################################################
 #                                                                                                                                                                                                 #
@@ -21,6 +21,8 @@ WHITE_R='\033[39m' # Same as GRAY_R for terminals with white background.
 GRAY_R='\033[39m'
 RED='\033[1;31m' # Light Red.
 GREEN='\033[1;32m' # Light Green.
+
+MONAD_DIR="${MONAD_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 
 ###################################################################################################################################################################################################
 #                                                                                                                                                                                                 #
@@ -51,13 +53,13 @@ check_is_bash() {
 }
 
 check_is_debian_based() {
-  if [[ ! -f /etc/debian_version ]]; then
+  if ! command -v docker &> /dev/null; then
     header_red
-    echo -e "${RED}#${RESET} This script is designed to run on Debian-based systems only.\\n"
-    echo -e "${RED}#${RESET} Please run this script on a Debian-based system and try again."
+    echo -e "${RED}#${RESET} Docker is required before running this portable updater.\\n"
+    echo -e "${RED}#${RESET} Install Docker with your operating system's package manager, then run this script again."
     exit 1
   fi
-    echo -e "${GREEN}#${RESET} This script is running on a Debian-based system.\\n"
+    echo -e "${GREEN}#${RESET} Docker command is available.\\n"
 }
 
 get_update_confirmation(){
@@ -105,21 +107,21 @@ check_docker_compose() {
 }
 
 ensure_docker_compose_file_exists() {
-  if [ ! -f "/opt/monad/compose.yml" ]; then
-    echo -e "${RED}#${RESET} compose.yml file not found. Please ensure it exists at /opt/monad/compose.yml."
+  if [ ! -f "${MONAD_DIR}/compose.yml" ]; then
+    echo -e "${RED}#${RESET} compose.yml file not found. Please ensure it exists at ${MONAD_DIR}/compose.yml."
     exit 1
   fi
 }
 
 force_recreate() {
   echo -e "${YELLOW}#${RESET} Pulling the latest Docker images..."
-  if ! docker compose -p monad -f /opt/monad/compose.yml pull; then
+  if ! docker compose -p monad -f "${MONAD_DIR}/compose.yml" pull; then
     echo -e "${RED}#${RESET} Failed to pull the latest Docker images. Please check your network connection and the Docker registry status, then try again."
     exit 1
   fi
   
   echo -e "${YELLOW}#${RESET} Forcing recreation of containers..."
-  if ! docker compose -p monad -f /opt/monad/compose.yml up -d --force-recreate; then
+  if ! docker compose -p monad -f "${MONAD_DIR}/compose.yml" up -d --force-recreate; then
     echo -e "${RED}#${RESET} Failed to recreate containers. Please check the Docker logs for more details."
     exit 1
   fi
@@ -135,7 +137,7 @@ get_local_ip() {
 
 success_message() {
   echo -e "${GREEN}#${RESET} MONAD installation completed successfully!\\n"
-  echo -e "${GREEN}#${RESET} Installation files are located at /opt/monad\\n\n"
+  echo -e "${GREEN}#${RESET} Installation files are located at ${MONAD_DIR}\\n\n"
   echo -e "${GREEN}#${RESET} MONAD's Command Center should automatically start whenever your device reboots. However, if you need to start it manually, you can always do so by running: ${WHITE_R}${monad_dir}/start_monad.sh${RESET}\\n"
   echo -e "${GREEN}#${RESET} You can now access the management interface at http://localhost:8080 or http://${local_ip_address}:8080\\n"
   echo -e "${GREEN}#${RESET} Thank you for supporting MONAD!\\n"

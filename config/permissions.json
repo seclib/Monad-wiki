@@ -1,0 +1,68 @@
+{
+  "version": 1,
+  "outbound": [
+    {
+      "id": "local-ollama",
+      "description": "Local or LAN Ollama-compatible API. Prompts and embeddings may be sent only to local/private endpoints.",
+      "allowPrivateNetwork": true,
+      "allowedHosts": ["localhost", "127.0.0.1", "::1", "host.docker.internal"],
+      "allowedPorts": [11434, 1234],
+      "allowUserData": true
+    },
+    {
+      "id": "monad-release-api",
+      "description": "MONAD release and benchmark APIs configured by the project.",
+      "allowedOrigins": [
+        "https://api.monad.local",
+        "https://benchmark.monad.local",
+        "https://api.github.com"
+      ],
+      "allowUserData": true
+    },
+    {
+      "id": "monad-source-assets",
+      "description": "MONAD-maintained public assets and installer metadata.",
+      "allowedOrigins": [
+        "https://github.com",
+        "https://raw.githubusercontent.com"
+      ],
+      "allowUserData": false
+    },
+    {
+      "id": "kiwix-content",
+      "description": "Kiwix library metadata and content downloads.",
+      "allowedOrigins": [
+        "https://browse.library.kiwix.org",
+        "https://library.kiwix.org",
+        "https://download.kiwix.org"
+      ],
+      "allowUserData": false
+    },
+    {
+      "id": "map-content",
+      "description": "Protomaps metadata and map downloads.",
+      "allowedOrigins": [
+        "https://build-metadata.protomaps.dev",
+        "https://build.protomaps.com"
+      ],
+      "allowUserData": false
+    },
+    {
+      "id": "container-registry",
+      "description": "Container registry metadata for image update checks.",
+      "allowedOrigins": [
+        "https://ghcr.io",
+        "https://registry-1.docker.io",
+        "https://auth.docker.io",
+        "https://hub.docker.com"
+      ],
+      "allowUserData": false
+    },
+    {
+      "id": "connectivity-check",
+      "description": "Optional internet reachability check without user data.",
+      "allowedOrigins": ["https://1.1.1.1"],
+      "allowUserData": false
+    }
+  ]
+}

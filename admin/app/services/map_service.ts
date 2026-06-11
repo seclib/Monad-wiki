@@ -1,8 +1,5 @@
 import { BaseStylesFile, MapLayer } from '../../types/maps.js'
-import {
-  DownloadRemoteSuccessCallback,
-  FileEntry,
-} from '../../types/files.js'
+import { DownloadRemoteSuccessCallback, FileEntry } from '../../types/files.js'
 import { doResumableDownloadWithRetry } from '../utils/downloads.js'
 import { extract } from 'tar'
 import env from '#start/env'
@@ -36,8 +33,8 @@ import {
 import { CountriesService } from './countries_service.js'
 import { execFile } from 'child_process'
 import { createHash, randomBytes } from 'crypto'
-import { tmpdir } from 'os'
 import { promisify } from 'util'
+import { CACHE_PATH, DATA_PATH, relativeProjectPath } from '../utils/paths.js'
 
 const execFileAsync = promisify(execFile)
 const DRY_RUN_TIMEOUT_MS = 60_000
@@ -71,7 +68,7 @@ interface IMapService {
 }
 
 export class MapService implements IMapService {
-  private readonly mapStoragePath = '/storage/maps'
+  private readonly mapStoragePath = join(relativeProjectPath(DATA_PATH), 'maps')
   private readonly baseStylesFile = 'monad-base-styles.json'
   private readonly basemapsAssetsDir = 'basemaps-assets'
   private readonly baseAssetsTarFile = 'base-assets.tar.gz'
@@ -98,7 +95,7 @@ export class MapService implements IMapService {
 
     const defaultTarFileURL = new URL(
       this.baseAssetsTarFile,
-      'https://github.com/Crosstalk-Solutions/project-nomad-maps/raw/refs/heads/master/'
+      'https://github.com/seclib/monad-maps/raw/refs/heads/main/'
     )
 
     const resolvedURL = url ? new URL(url) : defaultTarFileURL
@@ -109,7 +106,7 @@ export class MapService implements IMapService {
       max_retries: 2,
       allowedMimeTypes: BASE_ASSETS_MIME_TYPES,
       onAttemptError(error, attempt) {
-        console.error(`Attempt ${attempt} to download tar file failed: ${error.message}`)
+        logger.error(`Attempt ${attempt} to download tar file failed: ${error.message}`)
       },
     })
     const tarFileBuffer = await getFileStatsIfExists(tempTarPath)
@@ -239,7 +236,6 @@ export class MapService implements IMapService {
 
     const filepath = join(process.cwd(), this.mapStoragePath, 'pmtiles', filename)
 
-
     // First, ensure base assets are present - regions depend on them
     const baseAssetsExist = await this.ensureBaseAssets()
     if (!baseAssetsExist) {
@@ -251,7 +247,11 @@ export class MapService implements IMapService {
     // Parse resource metadata
     const parsedFilename = CollectionManifestService.parseMapFilename(filename)
     const resourceMetadata = parsedFilename
-      ? { resource_id: parsedFilename.resource_id, version: parsedFilename.version, collection_ref: null }
+      ? {
+          resource_id: parsedFilename.resource_id,
+          version: parsedFilename.version,
+          collection_ref: null,
+        }
       : undefined
 
     // Dispatch background job
@@ -301,7 +301,12 @@ export class MapService implements IMapService {
       }
 
       const contentLength = response.headers['content-length']
-      const size = contentLength ? parseInt(contentLength, 10) : 0
+      const size =
+        typeof contentLength === 'string' || typeof contentLength === 'number'
+          ? parseInt(String(contentLength), 10)
+          : Array.isArray(contentLength)
+            ? parseInt(contentLength[0] ?? '0', 10)
+            : 0
 
       return { filename, size }
     } catch (error: any) {
@@ -310,15 +315,18 @@ export class MapService implements IMapService {
     }
   }
 
-  async generateStylesJSON(host: string | null = null, protocol: string = 'http'): Promise<BaseStylesFile> {
+  async generateStylesJSON(
+    host: string | null = null,
+    protocol: string = 'http'
+  ): Promise<BaseStylesFile> {
     if (!(await this.checkBaseAssetsExist())) {
-      throw new Error('Base map assets are missing from storage/maps')
+      throw new Error('Base map assets are missing from data/maps')
     }
 
     const baseStylePath = join(this.baseDirPath, this.baseStylesFile)
     const baseStyle = await getFile(baseStylePath, 'string')
     if (!baseStyle) {
-      throw new Error('Base styles file not found in storage/maps')
+      throw new Error('Base styles file not found in data/maps')
     }
 
     const rawStyles = JSON.parse(baseStyle.toString()) as BaseStylesFile
@@ -326,11 +334,11 @@ export class MapService implements IMapService {
     const regions = (await this.listRegions()).files
 
     /** If we have the host, use it to build public URLs, otherwise we'll fallback to defaults
-    * This is mainly useful because we need to know what host the user is accessing from in order to
-    * properly generate URLs in the styles file
-    * e.g. user is accessing from "example.com", but we would by default generate "localhost:8080/..." so maps would
-    * fail to load.
-    */
+     * This is mainly useful because we need to know what host the user is accessing from in order to
+     * properly generate URLs in the styles file
+     * e.g. user is accessing from "example.com", but we would by default generate "localhost:8080/..." so maps would
+     * fail to load.
+     */
     const sources = this.generateSourcesArray(host, regions, protocol)
     const baseUrl = this.getPublicFileBaseUrl(host, this.basemapsAssetsDir, protocol)
 
@@ -457,7 +465,11 @@ export class MapService implements IMapService {
     return await listDirectoryContentsRecursive(this.baseDirPath)
   }
 
-  private generateSourcesArray(host: string | null, regions: FileEntry[], protocol: string = 'http'): BaseStylesFile['sources'][] {
+  private generateSourcesArray(
+    host: string | null,
+    regions: FileEntry[],
+    protocol: string = 'http'
+  ): BaseStylesFile['sources'][] {
     const sources: BaseStylesFile['sources'][] = []
     const baseUrl = this.getPublicFileBaseUrl(host, 'pmtiles', protocol)
 
@@ -620,7 +632,12 @@ export class MapService implements IMapService {
     regionFilepath: string,
     maxzoom?: number
   ): Promise<MapExtractPreflight> {
-    const dryRunOutput = join(tmpdir(), `pmtiles-dry-run-${randomBytes(6).toString('hex')}.pmtiles`)
+    await ensureDirectoryExists(join(CACHE_PATH, 'pmtiles'))
+    const dryRunOutput = join(
+      CACHE_PATH,
+      'pmtiles',
+      `pmtiles-dry-run-${randomBytes(6).toString('hex')}.pmtiles`
+    )
     const args = buildPmtilesExtractArgs({
       sourceUrl: info.url,
       outputFilepath: dryRunOutput,
@@ -693,7 +710,9 @@ export class MapService implements IMapService {
         const preflight = await this.runDryRun(info, regionFilepath, maxzoom)
         estimatedBytes = preflight.bytes
       } catch (err) {
-        logger.warn(`[MapService] extractRegion preflight failed, proceeding without estimate: ${err}`)
+        logger.warn(
+          `[MapService] extractRegion preflight failed, proceeding without estimate: ${err}`
+        )
       }
     }
 
@@ -745,14 +764,8 @@ export class MapService implements IMapService {
 
   private validateMaxzoom(maxzoom: number | undefined): void {
     if (typeof maxzoom !== 'number') return
-    if (
-      !Number.isInteger(maxzoom) ||
-      maxzoom < EXTRACT_MIN_ZOOM ||
-      maxzoom > EXTRACT_MAX_ZOOM
-    ) {
-      throw new Error(
-        `maxzoom must be an integer in [${EXTRACT_MIN_ZOOM}, ${EXTRACT_MAX_ZOOM}]`
-      )
+    if (!Number.isInteger(maxzoom) || maxzoom < EXTRACT_MIN_ZOOM || maxzoom > EXTRACT_MAX_ZOOM) {
+      throw new Error(`maxzoom must be an integer in [${EXTRACT_MIN_ZOOM}, ${EXTRACT_MAX_ZOOM}]`)
     }
   }
 
@@ -835,7 +848,11 @@ export class MapService implements IMapService {
    * @param protocol - the protocol to use in the generated URL (e.g. "http", "https"), defaults to "http"
    * @returns the public URL for the map asset
    */
-  private getPublicFileBaseUrl(specifiedHost: string | null, childPath: string, protocol: string = 'http'): string {
+  private getPublicFileBaseUrl(
+    specifiedHost: string | null,
+    childPath: string,
+    protocol: string = 'http'
+  ): string {
     function getHost() {
       try {
         const localUrlRaw = env.get('URL')
@@ -865,7 +882,7 @@ export class MapService implements IMapService {
       return getHost()
     }
 
-    const host = specifiedHostOrDefault();
+    const host = specifiedHostOrDefault()
     const withProtocol = `${protocol}://${host}`
     const baseUrlPath =
       process.env.NODE_ENV === 'production' ? childPath : urlJoin(this.mapStoragePath, childPath)
@@ -882,8 +899,7 @@ function findExactGroupMatch(
   return (
     groups.find(
       (g) =>
-        g.countries.length === countries.length &&
-        g.countries.every((c, i) => c === countries[i])
+        g.countries.length === countries.length && g.countries.every((c, i) => c === countries[i])
     ) ?? null
   )
 }

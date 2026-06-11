@@ -1,5 +1,9 @@
 #!/bin/bash
 
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+OUTPUT_DIR="${PROJECT_ROOT}/cache"
+mkdir -p "$OUTPUT_DIR"
+
 while true; do
     DISK_LAYOUT=$(lsblk --json -o NAME,SIZE,TYPE,MODEL,SERIAL,VENDOR,ROTA,TRAN)
 
@@ -14,7 +18,7 @@ while true; do
         } 
         END {print "]"}')
 
-    cat > /tmp/monad-disk-info.json << EOF
+    cat > "${OUTPUT_DIR}/monad-disk-info.json" << EOF
 {
 "diskLayout": $DISK_LAYOUT,
 "fsSize": $FS_SIZE

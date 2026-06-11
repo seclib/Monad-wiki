@@ -1,9 +1,9 @@
 import { access, readFile, writeFile, mkdir } from 'fs/promises'
 import { join, resolve } from 'path'
 import { createHash } from 'crypto'
-import { tmpdir } from 'os'
 import logger from '@adonisjs/core/services/logger'
 import type { Country, CountryCode, CountryGroup } from '../../types/maps.js'
+import { CACHE_PATH, assertProjectReadPath, assertProjectWritePath } from '../utils/paths.js'
 
 interface NEFeature {
   type: 'Feature'
@@ -187,12 +187,12 @@ export class CountriesService {
     const key = `b${REGION_BUFFER_DEGREES}:${resolved.join(',')}`
     const hash = createHash('sha1').update(key).digest('hex').slice(0, 12)
 
-    const dir = resolve(tmpdir(), 'monad-pmtiles-regions')
+    const dir = assertProjectWritePath(resolve(CACHE_PATH, 'pmtiles-regions'))
     await mkdir(dir, { recursive: true })
-    const filepath = join(dir, `region-${hash}.geojson`)
+    const filepath = assertProjectWritePath(join(dir, `region-${hash}.geojson`))
 
     try {
-      await access(filepath)
+      await access(assertProjectReadPath(filepath))
       return filepath
     } catch {}
 
@@ -305,4 +305,3 @@ function resolveIso3(p: Record<string, any>): string | null {
   if (adm && adm !== '-99') return adm.toUpperCase()
   return null
 }
-

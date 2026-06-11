@@ -2,7 +2,7 @@
 
 Thank you for your interest in contributing to MONAD! Community contributions are what keep this project growing and improving. Please read this guide fully before getting started — it will save you (and the maintainers) a lot of time.
 
-> **Note:** Acceptance of contributions is not guaranteed. All pull requests are evaluated based on quality, relevance, and alignment with the project's goals. The maintainers of MONAD ("Monad") reserve the right accept, deny, or modify any pull request at their sole discretion.
+> **Note:** Acceptance of contributions is not guaranteed. All pull requests are evaluated based on quality, relevance, and alignment with the project's goals. The maintainers of MONAD reserve the right to accept, deny, or modify any pull request at their sole discretion.
 
 ---
 
@@ -24,7 +24,7 @@ Thank you for your interest in contributing to MONAD! Community contributions ar
 
 Please read and review our full [Code of Conduct](https://github.com/seclib/monad/blob/main/CODE_OF_CONDUCT.md) before contributing. In short: please be respectful and considerate in all interactions with maintainers and other contributors.
 
-We are committed to providing a welcoming environment for everyone. Disrespectful or abusive behavior will not be tolerated. 
+We are committed to providing a welcoming environment for everyone. Disrespectful or abusive behavior will not be tolerated.
 
 ---
 
@@ -33,6 +33,7 @@ We are committed to providing a welcoming environment for everyone. Disrespectfu
 **Open an issue first.** Before writing any code for a non-trivial change, you must [open an issue](../../issues/new) to discuss your proposed change. This helps avoid duplicate work and ensures your contribution aligns with the project's direction. **Pull requests submitted without a corresponding issue may be closed at the maintainers' discretion.**
 
 **Trivial fixes are exempt** and may be submitted directly as a PR. Examples:
+
 - Typo and grammar corrections
 - Documentation clarifications
 - Small one-line bug fixes with an obvious cause
@@ -40,6 +41,7 @@ We are committed to providing a welcoming environment for everyone. Disrespectfu
 If you're not sure whether your change qualifies as trivial, open an issue first.
 
 When opening an issue:
+
 - Use a clear, descriptive title
 - Describe the problem you're solving or the feature you want to add
 - If it's a bug, include steps to reproduce it and as much detail about your environment as possible
@@ -48,7 +50,8 @@ When opening an issue:
 ---
 
 ## Getting Started with Contributing
-**Please note**: this is the Getting Started guide for developing and contributing to Monad, NOT [installing Monad](https://github.com/seclib/monad/blob/main/README.md) for regular use! 
+
+**Please note**: this is the Getting Started guide for developing and contributing to MONAD, not [installing MONAD](https://github.com/seclib/monad/blob/main/README.md) for regular use.
 
 ### Prerequisites
 
@@ -72,13 +75,15 @@ When opening an issue:
    ```
 
 ### Avoid Installing a Release Version Locally
-Because Monad relies heavily on Docker, we actually recommend against installing a release version of the project on the same local machine where you are developing. This can lead to conflicts with ports, volumes, and other resources. Instead, you can run your development version in a separate Docker environment while keeping your local machine clean. It certainly __can__ be done, but it adds complexity to your setup and workflow. If you choose to install a release version locally, please ensure you have a clear strategy for managing potential conflicts and resource usage.
+
+Because MONAD relies heavily on Docker, we recommend against installing a release version of the project on the same local machine where you are developing. This can lead to conflicts with ports, volumes, and other resources. Instead, run your development version in a separate Docker environment while keeping your local machine clean. It can be done, but it adds complexity to your setup and workflow. If you choose to install a release version locally, make sure you have a clear strategy for managing potential conflicts and resource usage.
 
 ---
 
 ## Development Workflow
 
 1. **Sync with upstream** before starting any new work. We prefer rebasing over merge commits to keep a clean, linear git history as much as possible (this also makes it easier for maintainers to review and merge your changes). To sync with upstream:
+
    ```bash
    git fetch upstream
    git checkout dev
@@ -86,6 +91,7 @@ Because Monad relies heavily on Docker, we actually recommend against installing
    ```
 
 2. **Create a feature branch** off `dev` with a descriptive name:
+
    ```bash
    git checkout -b fix/issue-123
    # or
@@ -112,18 +118,19 @@ This project uses [Conventional Commits](https://www.conventionalcommits.org/). 
 
 **Common types:**
 
-| Type | When to use |
-|------|-------------|
-| `feat` | A new user-facing feature |
-| `fix` | A bug fix |
-| `docs` | Documentation changes only |
+| Type       | When to use                                                               |
+| ---------- | ------------------------------------------------------------------------- |
+| `feat`     | A new user-facing feature                                                 |
+| `fix`      | A bug fix                                                                 |
+| `docs`     | Documentation changes only                                                |
 | `refactor` | Code change that isn't a fix or feature and does not affect functionality |
-| `chore` | Build process, dependency updates, tooling |
-| `test` | Adding or updating tests |
+| `chore`    | Build process, dependency updates, tooling                                |
+| `test`     | Adding or updating tests                                                  |
 
 **Scope** is optional but encouraged — use it to indicate the area of the codebase affected (e.g., `api`, `ui`, `maps`).
 
 **Examples:**
+
 ```
 feat(ui): add dark mode toggle to Command Center
 fix(api): resolve container status not updating after restart
@@ -164,12 +171,12 @@ This project uses [Semantic Versioning](https://semver.org/). Versions are manag
 
 ## Feedback & Community
 
-Have questions or want to discuss ideas before opening an issue? Join the community:
+Have questions or want to discuss ideas before opening an issue? Use the MONAD community channels:
 
-- **Discord:** [Join the Crosstalk Solutions server](https://discord.com/invite/crosstalksolutions) — the best place to get help, share your builds, and talk with other MONAD users
-- **Website:** [www.projectnomad.us](https://www.projectnomad.us)
-- **Benchmark Leaderboard:** [benchmark.projectnomad.us](https://benchmark.projectnomad.us)
+- **Discussions:** [GitHub Discussions](https://github.com/seclib/monad/discussions) — get help, share builds, and talk with other MONAD users
+- **Repository:** [seclib/monad](https://github.com/seclib/monad)
+- **Issues:** [Feature requests and bugs](https://github.com/seclib/monad/issues)
 
 ---
 
-*MONAD is licensed under the [Apache License 2.0](LICENSE).*
+_MONAD is licensed under the [MIT License](LICENSE)._

@@ -20,12 +20,13 @@ from pathlib import Path
 from typing import Any
 
 
+PROJECT_ROOT = Path(os.getenv("MONAD_PROJECT_ROOT", Path(__file__).resolve().parents[2])).resolve()
 PROJECT_NAME = os.getenv("MONAD_COMPOSE_PROJECT", "monad")
-COMPOSE_FILE = Path(os.getenv("MONAD_COMPOSE_FILE", "/opt/monad/compose.yml"))
-SHARED_DIR = Path(os.getenv("MONAD_UPDATE_SHARED_DIR", "/opt/monad/update-shared"))
+COMPOSE_FILE = Path(os.getenv("MONAD_COMPOSE_FILE", PROJECT_ROOT / "docker-compose.yaml")).resolve()
+SHARED_DIR = Path(os.getenv("MONAD_UPDATE_SHARED_DIR", PROJECT_ROOT / "cache" / "update-shared")).resolve()
 HOST = os.getenv("MONAD_UPDATER_HOST", "127.0.0.1")
 PORT = int(os.getenv("MONAD_UPDATER_PORT", "8765"))
-TOKEN_FILE = Path(os.getenv("MONAD_UPDATER_TOKEN_FILE", "/etc/monad/updater.token"))
+TOKEN_FILE = Path(os.getenv("MONAD_UPDATER_TOKEN_FILE", PROJECT_ROOT / "config" / "updater.token")).resolve()
 TOKEN = os.getenv("MONAD_UPDATER_TOKEN", "")
 
 REQUEST_FILE = SHARED_DIR / "update-request"
@@ -45,7 +46,7 @@ ALLOWED_IMAGE_REPOS = {
     item.strip()
     for item in os.getenv(
         "MONAD_ALLOWED_IMAGE_REPOS",
-        "ghcr.io/crosstalk-solutions/project-nomad",
+        "ghcr.io/seclib/monad",
     ).split(",")
     if item.strip()
 }

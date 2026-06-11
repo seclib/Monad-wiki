@@ -16,7 +16,6 @@ import {
 import type { HttpContext } from '@adonisjs/core/http'
 import { DateTime } from 'luxon'
 import { randomUUID } from 'node:crypto'
-import { createReadStream } from 'node:fs'
 import { join } from 'node:path'
 import {
   deleteFileIfExists,
@@ -24,8 +23,13 @@ import {
   getFileStatsIfExists,
   sanitizeFilename,
 } from '../utils/fs.js'
+import { STORAGE_PATH, assertProjectReadPath, assertProjectWritePath } from '../utils/paths.js'
+import {
+  createEncryptedStorageReadStream,
+  encryptFileIntoStorage,
+} from '../utils/storage_crypto.js'
 
-const DOCUMENT_STORAGE_PATH = join(process.cwd(), 'storage/local-life/documents')
+const DOCUMENT_STORAGE_PATH = assertProjectWritePath(join(STORAGE_PATH, 'local-life', 'documents'))
 const DOCUMENT_UPLOAD_EXTENSIONS = ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'webp', 'txt', 'md']
 
 function likeTerm(value: string) {
@@ -205,7 +209,13 @@ export default class LocalLifeController {
 
     const originalFilename = sanitizeFilename(uploadedFile.clientName)
     const storedFilename = `${randomUUID()}-${originalFilename}`
-    await uploadedFile.move(DOCUMENT_STORAGE_PATH, { name: storedFilename })
+    const storedPath = assertProjectWritePath(join(DOCUMENT_STORAGE_PATH, storedFilename))
+    if (!uploadedFile.tmpPath) {
+      return response.status(500).send({ message: 'Fichier temporaire introuvable.' })
+    }
+    const tmpPath = assertProjectReadPath(uploadedFile.tmpPath)
+    await encryptFileIntoStorage(tmpPath, storedPath)
+    await deleteFileIfExists(tmpPath)
 
     const document = await LocalDocument.create({
       title: nullableString(request.input('title')) || uploadedFile.clientName,
@@ -224,7 +234,7 @@ export default class LocalLifeController {
     if (wantsVaultSave(request.input('saveToVault'))) {
       const vault = await this.vaultService.mirrorDocument({
         title: document.title,
-        sourcePath: join(DOCUMENT_STORAGE_PATH, document.stored_filename),
+        sourcePath: assertProjectReadPath(join(DOCUMENT_STORAGE_PATH, document.stored_filename)),
         originalFilename: document.original_filename,
         tags: document.tags,
         category: document.category,
@@ -264,7 +274,7 @@ export default class LocalLifeController {
     const document = await LocalDocument.find(request.params().id)
     if (!document) return response.status(404).send({ message: 'Document introuvable.' })
 
-    const filePath = join(DOCUMENT_STORAGE_PATH, document.stored_filename)
+    const filePath = assertProjectReadPath(join(DOCUMENT_STORAGE_PATH, document.stored_filename))
     const stats = await getFileStatsIfExists(filePath)
     if (!stats)
       return response.status(404).send({ message: 'Fichier introuvable sur le stockage local.' })
@@ -275,7 +285,7 @@ export default class LocalLifeController {
       `attachment; filename="${safeAttachmentName(document.original_filename)}"`
     )
     response.header('Content-Length', String(stats.size))
-    return response.stream(createReadStream(filePath))
+    return response.stream(createEncryptedStorageReadStream(filePath))
   }
 
   async listNotes({ request }: HttpContext) {

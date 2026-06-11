@@ -1,43 +1,63 @@
 # Logs
-logs
+logs/*
+!logs/.gitkeep
 *.log
 
-# Diagnostic reports (https://nodejs.org/api/report.html)
+# Diagnostic reports
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
-# Compiled binary addons (https://nodejs.org/api/addons.html)
-build/Release
-
-# Dependency directories
+# Dependencies and package-manager cache
 node_modules/
+admin/node_modules/
+.npm/
+__pycache__/
+*.py[cod]
 
-# Optional npm cache directory
-.npm
-
-# dotenv environment variables file
+# Environment files
 .env
+.env.*
+!.env.example
+!admin/.env.example
 
-# Build / Dist
-dist
-build
-tmp
+# Build and generated output
+dist/
+build/
+tmp/
+admin/build/
+admin/public/assets/
+build/Release/
 
-# macOS Metafiles
+# Runtime-generated MONAD data
+/storage/*
+cache/*
+!cache/.gitkeep
+/config/*
+!/config/.gitkeep
+!/config/permissions.json
+!/config/settings.json
+!/config/caddy/
+!/config/caddy/Caddyfile
+models/*
+!models/.gitkeep
+data/*
+!data/.gitkeep
+admin/storage/
+server/public/
+server/temp/
+vault/*
+!vault/.gitkeep
+
+# Large local content and databases
+*.db
+*.sqlite
+*.sqlite3
+*.zim
+*.pmtiles
+
+# OS and editor metadata
 .DS_Store
+.vscode/
+.idea/
 
-# Fonts
-.ttf
-
-# Runtime-generated Files
-server/public
-server/temp
-
-# IDE Files
-.vscode
-.idea
-
-# Frontend assets compiled code
-admin/public/assets
-
-# Admin specific development files
-admin/storage
+# Local font drops
+*.ttf

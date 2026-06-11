@@ -6,6 +6,10 @@ jobs:
   check_authorization:
     name: Check authorization to release new version
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: read
+      pull-requests: read
     outputs:
       isAuthorized: ${{ steps.check-auth.outputs.is_authorized }}
     steps:
@@ -32,11 +36,11 @@ jobs:
         uses: cycjimmy/semantic-release-action@v6
         id: semver
         env:
-          GITHUB_TOKEN: ${{ secrets.COSMISTACKBOT_ACCESS_TOKEN }}
-          GIT_AUTHOR_NAME: cosmistack-bot
-          GIT_AUTHOR_EMAIL: dev@cosmistack.com
-          GIT_COMMITTER_NAME: cosmistack-bot
-          GIT_COMMITTER_EMAIL: dev@cosmistack.com
+          GITHUB_TOKEN: ${{ secrets.MONAD_RELEASE_TOKEN || github.token }}
+          GIT_AUTHOR_NAME: seclib-bot
+          GIT_AUTHOR_EMAIL: actions@github.com
+          GIT_COMMITTER_NAME: seclib-bot
+          GIT_COMMITTER_EMAIL: actions@github.com
 
       - name: Finalize release notes
         # Skip for pre-releases (versions containing a hyphen, e.g. 1.27.0-rc.1)
@@ -65,9 +69,9 @@ jobs:
           steps.finalize-notes.outputs.has_notes == 'true' &&
           !contains(steps.semver.outputs.new_release_version, '-')
         run: |
-          git config user.name "cosmistack-bot"
-          git config user.email "dev@cosmistack.com"
-          git remote set-url origin https://x-access-token:${{ secrets.COSMISTACKBOT_ACCESS_TOKEN }}@github.com/${{ github.repository }}.git
+          git config user.name "seclib-bot"
+          git config user.email "actions@github.com"
+          git remote set-url origin https://x-access-token:${{ secrets.MONAD_RELEASE_TOKEN || github.token }}@github.com/${{ github.repository }}.git
           git add admin/docs/release-notes.md
           git commit -m "docs(release): finalize v${{ steps.semver.outputs.new_release_version }} release notes [skip ci]"
           git push origin main
@@ -78,16 +82,7 @@ jobs:
           steps.finalize-notes.outputs.has_notes == 'true' &&
           !contains(steps.semver.outputs.new_release_version, '-')
         env:
-          GH_TOKEN: ${{ secrets.COSMISTACKBOT_ACCESS_TOKEN }}
+          GH_TOKEN: ${{ secrets.MONAD_RELEASE_TOKEN || github.token }}
         run: |
           gh release edit "v${{ steps.semver.outputs.new_release_version }}" \
             --notes-file admin/docs/release-notes.md.section
-
-      # Future: Send release notes email
-      # - name: Send release notes email
-      #   if: steps.semver.outputs.new_release_published == 'true' && steps.finalize-notes.outputs.has_notes == 'true'
-      #   run: |
-      #     curl -X POST "https://api.projectnomad.us/api/v1/newsletter/release" \
-      #       -H "Authorization: Bearer ${{ secrets.NOMAD_API_KEY }}" \
-      #       -H "Content-Type: application/json" \
-      #       -d "{\"version\": \"${{ steps.semver.outputs.new_release_version }}\", \"body\": $(cat admin/docs/release-notes.md.section | jq -Rs .)}"

@@ -4,7 +4,14 @@ import { inject } from '@adonisjs/core'
 import logger from '@adonisjs/core/services/logger'
 import { TokenChunker } from '@chonkiejs/core'
 import sharp from 'sharp'
-import { deleteFileIfExists, determineFileType, getFile, getFileStatsIfExists, listDirectoryContentsRecursive, ZIM_STORAGE_PATH } from '../utils/fs.js'
+import {
+  deleteFileIfExists,
+  determineFileType,
+  getFile,
+  getFileStatsIfExists,
+  listDirectoryContentsRecursive,
+  ZIM_STORAGE_PATH,
+} from '../utils/fs.js'
 import { PDFParse } from 'pdf-parse'
 import { createWorker } from 'tesseract.js'
 import { fromBuffer } from 'pdf2pic'
@@ -25,7 +32,12 @@ import type { KbIngestStateValue } from '../../types/kb_ingest_state.js'
 import { ZIMExtractionService } from './zim_extraction_service.js'
 import { ZIM_BATCH_SIZE } from '../../constants/zim_extraction.js'
 import { EMBEDDING_MODEL_NAME } from '../../constants/ollama.js'
-import { ProcessAndEmbedFileResponse, ProcessZIMFileResponse, RAGResult, RerankedRAGResult } from '../../types/rag.js'
+import {
+  ProcessAndEmbedFileResponse,
+  ProcessZIMFileResponse,
+  RAGResult,
+  RerankedRAGResult,
+} from '../../types/rag.js'
 
 export type EmbedSingleFileFailureCode =
   | 'not_found'
@@ -55,8 +67,8 @@ export class RagService {
   public static TARGET_TOKENS_PER_CHUNK = 1500 // Target 1500 tokens per chunk for embedding
   public static PREFIX_TOKEN_BUDGET = 10 // Reserve ~10 tokens for prefixes
   public static CHAR_TO_TOKEN_RATIO = 2 // Conservative chars-per-token estimate; technical docs
-                                         // (numbers, symbols, abbreviations) tokenize denser
-                                         // than plain prose (~3), so 2 avoids context overflows
+  // (numbers, symbols, abbreviations) tokenize denser
+  // than plain prose (~3), so 2 avoids context overflows
   // Nomic Embed Text v1.5 uses task-specific prefixes for optimal performance
   public static SEARCH_DOCUMENT_PREFIX = 'search_document: '
   public static SEARCH_QUERY_PREFIX = 'search_query: '
@@ -65,14 +77,16 @@ export class RagService {
   constructor(
     private dockerService: DockerService,
     private ollamaService: OllamaService
-  ) { }
+  ) {}
 
   private async _initializeQdrantClient() {
     if (!this.qdrantInitPromise) {
       this.qdrantInitPromise = (async () => {
         const qdrantUrl = await this.dockerService.getServiceURL(SERVICE_NAMES.QDRANT)
         if (!qdrantUrl) {
-          throw new Error('Qdrant vector database is offline. Restart the AI Assistant service in Settings to restore the Knowledge Base.')
+          throw new Error(
+            'Qdrant vector database is offline. Restart the AI Assistant service in Settings to restore the Knowledge Base.'
+          )
         }
         this.qdrant = new QdrantClient({ url: qdrantUrl })
       })().catch((err) => {
@@ -94,7 +108,8 @@ export class RagService {
       this.qdrantInitPromise = null
       return {
         online: false,
-        message: 'Qdrant vector database is offline. Restart the AI Assistant service in Settings to restore the Knowledge Base.',
+        message:
+          'Qdrant vector database is offline. Restart the AI Assistant service in Settings to restore the Knowledge Base.',
       }
     }
   }
@@ -146,15 +161,17 @@ export class RagService {
    * - Control characters (except newlines, tabs, and carriage returns)
    */
   private sanitizeText(text: string): string {
-    return text
-      // Null bytes
-      .replace(/\x00/g, '')
-      // Problematic control characters (keep \n, \r, \t)
-      .replace(/[\x01-\x08\x0B-\x0C\x0E-\x1F\x7F]/g, '')
-      // Invalid Unicode surrogates
-      .replace(/[\uD800-\uDFFF]/g, '')
-      // Trim extra whitespace
-      .trim()
+    return (
+      text
+        // Null bytes
+        .replace(/\x00/g, '')
+        // Problematic control characters (keep \n, \r, \t)
+        .replace(/[\x01-\x08\x0B-\x0C\x0E-\x1F\x7F]/g, '')
+        // Invalid Unicode surrogates
+        .replace(/[\uD800-\uDFFF]/g, '')
+        // Trim extra whitespace
+        .trim()
+    )
   }
 
   /**
@@ -208,33 +225,33 @@ export class RagService {
    * TODO: We could probably move this to a separate QueryPreprocessor class if it grows more complex, but for now it's manageable here.
    */
   private static QUERY_EXPANSION_DICTIONARY: Record<string, string> = {
-    'bob': 'bug out bag',
-    'bov': 'bug out vehicle',
-    'bol': 'bug out location',
-    'edc': 'every day carry',
-    'mre': 'meal ready to eat',
-    'shtf': 'shit hits the fan',
-    'teotwawki': 'the end of the world as we know it',
-    'opsec': 'operational security',
-    'ifak': 'individual first aid kit',
-    'ghb': 'get home bag',
-    'ghi': 'get home in',
-    'wrol': 'without rule of law',
-    'emp': 'electromagnetic pulse',
-    'ham': 'ham amateur radio',
-    'nbr': 'nuclear biological radiological',
-    'cbrn': 'chemical biological radiological nuclear',
-    'sar': 'search and rescue',
-    'comms': 'communications radio',
-    'fifo': 'first in first out',
-    'mylar': 'mylar bag food storage',
-    'paracord': 'paracord 550 cord',
-    'ferro': 'ferro rod fire starter',
-    'bivvy': 'bivvy bivy emergency shelter',
-    'bdu': 'battle dress uniform',
-    'gmrs': 'general mobile radio service',
-    'frs': 'family radio service',
-    'nbc': 'nuclear biological chemical',
+    bob: 'bug out bag',
+    bov: 'bug out vehicle',
+    bol: 'bug out location',
+    edc: 'every day carry',
+    mre: 'meal ready to eat',
+    shtf: 'shit hits the fan',
+    teotwawki: 'the end of the world as we know it',
+    opsec: 'operational security',
+    ifak: 'individual first aid kit',
+    ghb: 'get home bag',
+    ghi: 'get home in',
+    wrol: 'without rule of law',
+    emp: 'electromagnetic pulse',
+    ham: 'ham amateur radio',
+    nbr: 'nuclear biological radiological',
+    cbrn: 'chemical biological radiological nuclear',
+    sar: 'search and rescue',
+    comms: 'communications radio',
+    fifo: 'first in first out',
+    mylar: 'mylar bag food storage',
+    paracord: 'paracord 550 cord',
+    ferro: 'ferro rod fire starter',
+    bivvy: 'bivvy bivy emergency shelter',
+    bdu: 'battle dress uniform',
+    gmrs: 'general mobile radio service',
+    frs: 'family radio service',
+    nbc: 'nuclear biological chemical',
   }
 
   private preprocessQuery(query: string): string {
@@ -315,7 +332,9 @@ export class RagService {
       // TokenChunker uses character-based tokenization (1 char = 1 token)
       // We need to convert our embedding model's token counts to character counts
       // since nomic-embed-text tokenizer uses ~3 chars per token
-      const targetCharsPerChunk = Math.floor(RagService.TARGET_TOKENS_PER_CHUNK * RagService.CHAR_TO_TOKEN_RATIO)
+      const targetCharsPerChunk = Math.floor(
+        RagService.TARGET_TOKENS_PER_CHUNK * RagService.CHAR_TO_TOKEN_RATIO
+      )
       const overlapChars = Math.floor(150 * RagService.CHAR_TO_TOKEN_RATIO)
 
       const chunker = await TokenChunker.create({
@@ -363,9 +382,14 @@ export class RagService {
         const batchStart = batchIdx * batchSize
         const batch = prefixedChunks.slice(batchStart, batchStart + batchSize)
 
-        logger.debug(`[RAG] Embedding batch ${batchIdx + 1}/${totalBatches} (${batch.length} chunks)`)
+        logger.debug(
+          `[RAG] Embedding batch ${batchIdx + 1}/${totalBatches} (${batch.length} chunks)`
+        )
 
-        const response = await this.ollamaService.embed(this.resolvedEmbeddingModel ?? EMBEDDING_MODEL_NAME, batch)
+        const response = await this.ollamaService.embed(
+          this.resolvedEmbeddingModel ?? EMBEDDING_MODEL_NAME,
+          batch
+        )
 
         embeddings.push(...response.embeddings)
 
@@ -396,13 +420,14 @@ export class RagService {
 
         logger.debug(`[RAG] Extracted keywords for chunk ${index}: [${allKeywords.join(', ')}]`)
         if (structuralKeywords.length > 0) {
-          logger.debug(`[RAG]   - Structural: [${structuralKeywords.join(', ')}], Content: [${contentKeywords.join(', ')}]`)
+          logger.debug(
+            `[RAG]   - Structural: [${structuralKeywords.join(', ')}], Content: [${contentKeywords.join(', ')}]`
+          )
         }
 
         // Sanitize source metadata as well
-        const sanitizedSource = typeof metadata.source === 'string'
-          ? this.sanitizeText(metadata.source)
-          : 'unknown'
+        const sanitizedSource =
+          typeof metadata.source === 'string' ? this.sanitizeText(metadata.source) : 'unknown'
 
         return {
           id: randomUUID(), // qdrant requires either uuid or unsigned int
@@ -415,7 +440,7 @@ export class RagService {
             keywords: allKeywords.join(' '), // store as space-separated string for text search
             char_count: sanitizedText.length,
             created_at: timestamp,
-            source: sanitizedSource
+            source: sanitizedSource,
           },
         }
       })
@@ -427,7 +452,6 @@ export class RagService {
 
       return { chunks: chunks.length }
     } catch (error) {
-      console.error(error)
       logger.error('[RAG] Error embedding text:', error)
       return null
     }
@@ -665,9 +689,7 @@ export class RagService {
     })
 
     // If no spine found, fall back to all manifest items
-    const contentFiles = spineOrder.length > 0
-      ? spineOrder
-      : Array.from(manifestItems.values())
+    const contentFiles = spineOrder.length > 0 ? spineOrder : Array.from(manifestItems.values())
 
     // Extract text from each content file in order
     const textParts: string[] = []
@@ -686,7 +708,9 @@ export class RagService {
     }
 
     const fullText = textParts.join('\n\n')
-    logger.debug(`[RAG] EPUB extracted ${textParts.length} chapters, ${fullText.length} characters total`)
+    logger.debug(
+      `[RAG] EPUB extracted ${textParts.length} chapters, ${fullText.length} characters total`
+    )
     return fullText
   }
 
@@ -697,12 +721,19 @@ export class RagService {
     onProgress?: (percent: number) => Promise<void>
   ): Promise<{ success: boolean; message: string; chunks?: number }> {
     if (!extractedText || extractedText.trim().length === 0) {
-      return { success: false, message: 'Process completed succesfully, but no text was found to embed.' }
+      return {
+        success: false,
+        message: 'Process completed succesfully, but no text was found to embed.',
+      }
     }
 
-    const embedResult = await this.embedAndStoreText(extractedText, {
-      source: filepath
-    }, onProgress)
+    const embedResult = await this.embedAndStoreText(
+      extractedText,
+      {
+        source: filepath,
+      },
+      onProgress
+    )
 
     if (!embedResult) {
       return { success: false, message: 'Failed to embed and store the extracted text.' }
@@ -723,7 +754,7 @@ export class RagService {
   /**
    * Main pipeline to process and embed an uploaded file into the RAG knowledge base.
    * This includes text extraction, chunking, embedding, and storing in Qdrant.
-   * 
+   *
    * Orchestrates file type detection and delegates to specialized processors.
    * For ZIM files, supports batch processing via batchOffset parameter.
    */
@@ -775,12 +806,15 @@ export class RagService {
 
       // Extraction done — scale remaining embedding progress from 15% to 100%
       if (onProgress) await onProgress(15)
-      const scaledProgress = onProgress
-        ? (p: number) => onProgress(15 + p * 0.85)
-        : undefined
+      const scaledProgress = onProgress ? (p: number) => onProgress(15 + p * 0.85) : undefined
 
       // Embed extracted text and cleanup
-      return await this.embedTextAndCleanup(extractedText, filepath, deleteAfterEmbedding, scaledProgress)
+      return await this.embedTextAndCleanup(
+        extractedText,
+        filepath,
+        deleteAfterEmbedding,
+        scaledProgress
+      )
     } catch (error) {
       logger.error('[RAG] Error processing and embedding file:', error)
       return { success: false, message: 'Error processing and embedding file.' }
@@ -826,9 +860,7 @@ export class RagService {
           allModels.find((model) => model.name.toLowerCase().includes('nomic-embed-text'))
 
         if (!embeddingModel) {
-          logger.warn(
-            `[RAG] ${EMBEDDING_MODEL_NAME} not found. Cannot perform similarity search.`
-          )
+          logger.warn(`[RAG] ${EMBEDDING_MODEL_NAME} not found. Cannot perform similarity search.`)
           this.embeddingModelVerified = false
           return []
         }
@@ -859,7 +891,10 @@ export class RagService {
         return []
       }
 
-      const response = await this.ollamaService.embed(this.resolvedEmbeddingModel ?? EMBEDDING_MODEL_NAME, [prefixedQuery])
+      const response = await this.ollamaService.embed(
+        this.resolvedEmbeddingModel ?? EMBEDDING_MODEL_NAME,
+        [prefixedQuery]
+      )
 
       // Perform semantic search with a higher limit to enable reranking
       const searchLimit = limit * 3 // Get more results for reranking
@@ -1027,9 +1062,7 @@ export class RagService {
    * Uses greedy selection: for each result, apply 0.85^n penalty where n is the
    * number of results already selected from the same source.
    */
-  private applySourceDiversity(
-    results: Array<RerankedRAGResult>
-  ) {
+  private applySourceDiversity(results: Array<RerankedRAGResult>) {
     const sourceCounts = new Map<string, number>()
     const DIVERSITY_PENALTY = 0.85
 
@@ -1059,7 +1092,10 @@ export class RagService {
    */
   public async hasDocuments(): Promise<boolean> {
     try {
-      await this._ensureCollection(RagService.CONTENT_COLLECTION_NAME, RagService.EMBEDDING_DIMENSION)
+      await this._ensureCollection(
+        RagService.CONTENT_COLLECTION_NAME,
+        RagService.EMBEDDING_DIMENSION
+      )
       const collectionInfo = await this.qdrant!.getCollection(RagService.CONTENT_COLLECTION_NAME)
       return (collectionInfo.points_count ?? 0) > 0
     } catch {
@@ -1100,7 +1136,11 @@ export class RagService {
       // the vector store?". Both are needed to render the KB UI honestly.
       const stateByPath = new Map<string, { state: KbIngestStateValue; chunks_embedded: number }>()
       try {
-        const stateRows = await KbIngestState.query().select('file_path', 'state', 'chunks_embedded')
+        const stateRows = await KbIngestState.query().select(
+          'file_path',
+          'state',
+          'chunks_embedded'
+        )
         for (const row of stateRows) {
           sources.add(row.file_path)
           stateByPath.set(row.file_path, {
@@ -1221,9 +1261,7 @@ export class RagService {
         const chunksInQdrant = chunksBySource.get(source) ?? 0
         const fileName = source.split(/[/\\]/).pop() ?? source
         const expectedChunks =
-          fileSizeBytes > 0
-            ? await KbRatioRegistry.estimateChunks(fileName, fileSizeBytes)
-            : null
+          fileSizeBytes > 0 ? await KbRatioRegistry.estimateChunks(fileName, fileSizeBytes) : null
 
         const warnings = decideWarnings({ fileSizeBytes, chunksInQdrant, expectedChunks })
         if (warnings.length > 0) out[source] = warnings
@@ -1257,17 +1295,19 @@ export class RagService {
       logger.info(`[RAG] Deleted all points for source: ${source}`)
 
       /** Delete the physical file only if it lives inside the uploads directory.
-      * resolve() normalises path traversal sequences (e.g. "/../..") before the
-      * check to prevent path traversal vulns
-      * The trailing sep is to ensure a prefix like "kb_uploads_{something_incorrect}" can't slip through.
-      */
+       * resolve() normalises path traversal sequences (e.g. "/../..") before the
+       * check to prevent path traversal vulns
+       * The trailing sep is to ensure a prefix like "kb_uploads_{something_incorrect}" can't slip through.
+       */
       const uploadsAbsPath = join(process.cwd(), RagService.UPLOADS_STORAGE_PATH)
       const resolvedSource = resolve(source)
       if (resolvedSource.startsWith(uploadsAbsPath + sep)) {
         await deleteFileIfExists(resolvedSource)
         logger.info(`[RAG] Deleted uploaded file from disk: ${resolvedSource}`)
       } else {
-        logger.warn(`[RAG] File was removed from knowledge base but doesn't live in Monad's uploads directory, so it can't be safely removed. Skipping deletion of physical file...`)
+        logger.warn(
+          `[RAG] File was removed from knowledge base but doesn't live in MONAD's uploads directory, so it can't be safely removed. Skipping deletion of physical file...`
+        )
       }
 
       // Drop the ingest state row last so the file disappears entirely. Without
@@ -1289,8 +1329,11 @@ export class RagService {
 
       const alreadyEmbeddedRaw = await KVStore.getValue('rag.docsEmbedded')
       if (alreadyEmbeddedRaw && !force) {
-        logger.info('[RAG] Monad docs have already been discovered and queued. Skipping.')
-        return { success: true, message: 'Monad docs have already been discovered and queued. Skipping.' }
+        logger.info('[RAG] MONAD docs have already been discovered and queued. Skipping.')
+        return {
+          success: true,
+          message: 'MONAD docs have already been discovered and queued. Skipping.',
+        }
       }
 
       const filesToEmbed: Array<{ path: string; source: string }> = []
@@ -1307,7 +1350,7 @@ export class RagService {
         }
       }
 
-      logger.info(`[RAG] Discovered ${filesToEmbed.length} Monad doc files to embed`)
+      logger.info(`[RAG] Discovered ${filesToEmbed.length} MONAD doc files to embed`)
 
       // Import EmbedFileJob dynamically to avoid circular dependencies
       const { EmbedFileJob } = await import('#jobs/embed_file_job')
@@ -1322,20 +1365,20 @@ export class RagService {
           })
           logger.info(`[RAG] Successfully dispatched job for ${fileInfo.source}`)
         } catch (fileError) {
-          logger.error(
-            `[RAG] Error dispatching job for file ${fileInfo.source}:`,
-            fileError
-          )
+          logger.error(`[RAG] Error dispatching job for file ${fileInfo.source}:`, fileError)
         }
       }
 
       // Update KV store to mark docs as discovered so we don't redo this unnecessarily
       await KVStore.setValue('rag.docsEmbedded', true)
 
-      return { success: true, message: `Monad docs discovery completed. Dispatched ${filesToEmbed.length} embedding jobs.` }
+      return {
+        success: true,
+        message: `MONAD docs discovery completed. Dispatched ${filesToEmbed.length} embedding jobs.`,
+      }
     } catch (error) {
-      logger.error('Error discovering Monad docs:', error)
-      return { success: false, message: 'Error discovering Monad docs.' }
+      logger.error('Error discovering MONAD docs:', error)
+      return { success: false, message: 'Error discovering MONAD docs.' }
     }
   }
 
@@ -1451,7 +1494,8 @@ export class RagService {
       return {
         success: false,
         code: 'inflight',
-        message: 'A job for this file is already in progress. Wait for it to finish before re-queuing.',
+        message:
+          'A job for this file is already in progress. Wait for it to finish before re-queuing.',
       }
     }
 
@@ -1488,10 +1532,7 @@ export class RagService {
    * by reembedAll() where the file must remain so it can be re-ingested.
    */
   private async _deletePointsBySource(source: string): Promise<void> {
-    await this._ensureCollection(
-      RagService.CONTENT_COLLECTION_NAME,
-      RagService.EMBEDDING_DIMENSION
-    )
+    await this._ensureCollection(RagService.CONTENT_COLLECTION_NAME, RagService.EMBEDDING_DIMENSION)
     await this.qdrant!.delete(RagService.CONTENT_COLLECTION_NAME, {
       filter: { must: [{ key: 'source', match: { value: source } }] },
     })
@@ -1508,7 +1549,10 @@ export class RagService {
     const { QueueService } = await import('#services/queue_service')
     const queue = QueueService.getInstance().getQueue(EmbedFileJob.queue)
     const counts = await queue.getJobCounts('waiting', 'active', 'delayed', 'paused')
-    return (counts.waiting || 0) + (counts.active || 0) + (counts.delayed || 0) + (counts.paused || 0) > 0
+    return (
+      (counts.waiting || 0) + (counts.active || 0) + (counts.delayed || 0) + (counts.paused || 0) >
+      0
+    )
   }
 
   /**
@@ -1526,7 +1570,7 @@ export class RagService {
       logger.info('[RAG] Starting knowledge base sync scan')
 
       await this.discoverMonadDocs(true).catch((error) => {
-        logger.error('[RAG] Error during Monad docs discovery in sync process:', error)
+        logger.error('[RAG] Error during MONAD docs discovery in sync process:', error)
       })
 
       const filesInStorage = await this._discoverKbFiles()
@@ -1559,7 +1603,7 @@ export class RagService {
       const stateRows = await KbIngestState.all()
       const stateByPath = new Map(stateRows.map((row) => [row.file_path, row]))
 
-      // Non-embeddable files (e.g. kiwix-library.xml in /storage/zim) would otherwise
+      // Non-embeddable files (e.g. kiwix-library.xml in /data/zim) would otherwise
       // be dispatched to EmbedFileJob, fail with "Unsupported file type", and retry
       // on every sync — filter them out before state decisions.
       const embeddableFiles = filesInStorage.filter(
@@ -1669,14 +1713,15 @@ export class RagService {
       if (await this._hasInflightEmbedJobs()) {
         return {
           success: false,
-          message: 'Embed jobs are already in progress. Wait for the queue to drain (or clean up failed jobs) before triggering a bulk re-embed.',
+          message:
+            'Embed jobs are already in progress. Wait for the queue to drain (or clean up failed jobs) before triggering a bulk re-embed.',
         }
       }
 
       logger.info('[RAG] Starting full re-embed (per-file replace)')
 
       await this.discoverMonadDocs(true).catch((error) => {
-        logger.error('[RAG] Error re-running Monad docs discovery during re-embed:', error)
+        logger.error('[RAG] Error re-running MONAD docs discovery during re-embed:', error)
       })
 
       const filesInStorage = await this._discoverKbFiles()
@@ -1702,7 +1747,10 @@ export class RagService {
         try {
           await this._deletePointsBySource(filePath)
         } catch (err) {
-          logger.error(`[RAG] Failed to delete prior points for ${filePath}; skipping dispatch:`, err)
+          logger.error(
+            `[RAG] Failed to delete prior points for ${filePath}; skipping dispatch:`,
+            err
+          )
           failedPaths.push(filePath)
           continue
         }
@@ -1717,7 +1765,10 @@ export class RagService {
         } catch (fileError) {
           // Old points already deleted but the new job never made it onto the
           // queue. Logged + surfaced so an operator can rerun a sync.
-          logger.error(`[RAG] Re-embed dispatch failed for ${filePath} after delete; file is now unindexed until next sync:`, fileError)
+          logger.error(
+            `[RAG] Re-embed dispatch failed for ${filePath} after delete; file is now unindexed until next sync:`,
+            fileError
+          )
           failedPaths.push(filePath)
         }
       }
@@ -1750,7 +1801,7 @@ export class RagService {
   /**
    * Destructive rebuild. Drops the entire Qdrant collection (wiping every
    * point including orphans), recreates it with the correct dimension, clears
-   * the Monad-docs discovery flag, then dispatches an EmbedFileJob for every
+   * the MONAD-docs discovery flag, then dispatches an EmbedFileJob for every
    * file currently on disk.
    *
    * Refuses to run if the embeddings queue already has in-flight work.
@@ -1766,7 +1817,8 @@ export class RagService {
       if (await this._hasInflightEmbedJobs()) {
         return {
           success: false,
-          message: 'Embed jobs are already in progress. Wait for the queue to drain (or clean up failed jobs) before triggering a reset.',
+          message:
+            'Embed jobs are already in progress. Wait for the queue to drain (or clean up failed jobs) before triggering a reset.',
         }
       }
 
@@ -1786,10 +1838,10 @@ export class RagService {
         RagService.EMBEDDING_DIMENSION
       )
 
-      // Force Monad docs to be re-dispatched.
+      // Force MONAD docs to be re-dispatched.
       await KVStore.setValue('rag.docsEmbedded', false)
       await this.discoverMonadDocs(true).catch((error) => {
-        logger.error('[RAG] Error re-running Monad docs discovery after reset:', error)
+        logger.error('[RAG] Error re-running MONAD docs discovery after reset:', error)
       })
 
       const filesInStorage = await this._discoverKbFiles()

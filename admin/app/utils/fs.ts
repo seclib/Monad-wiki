@@ -3,24 +3,37 @@ import path, { join } from 'path'
 import { FileEntry } from '../../types/files.js'
 import { createReadStream } from 'fs'
 import { LSBlockDevice, MonadDiskInfoRaw } from '../../types/system.js'
+import {
+  DATA_PATH,
+  assertProjectReadPath,
+  assertProjectWritePath,
+  relativeProjectPath,
+} from './paths.js'
+import {
+  createEncryptedStorageReadStream,
+  getEncryptedStorageMetadata,
+  isStoragePath,
+  readEncryptedStorageFile,
+} from './storage_crypto.js'
 
-export const ZIM_STORAGE_PATH = '/storage/zim'
-export const KIWIX_LIBRARY_XML_PATH = '/storage/zim/kiwix-library.xml'
+export const ZIM_STORAGE_PATH = join(relativeProjectPath(DATA_PATH), 'zim')
+export const KIWIX_LIBRARY_XML_PATH = join(ZIM_STORAGE_PATH, 'kiwix-library.xml')
 
-export async function listDirectoryContents(path: string): Promise<FileEntry[]> {
-  const entries = await readdir(path, { withFileTypes: true })
+export async function listDirectoryContents(inputPath: string): Promise<FileEntry[]> {
+  const safePath = assertProjectReadPath(inputPath)
+  const entries = await readdir(safePath, { withFileTypes: true })
   const results: FileEntry[] = []
   for (const entry of entries) {
     if (entry.isFile()) {
       results.push({
         type: 'file',
-        key: join(path, entry.name),
+        key: join(safePath, entry.name),
         name: entry.name,
       })
     } else if (entry.isDirectory()) {
       results.push({
         type: 'directory',
-        prefix: join(path, entry.name),
+        prefix: join(safePath, entry.name),
         name: entry.name,
       })
     }
@@ -28,11 +41,12 @@ export async function listDirectoryContents(path: string): Promise<FileEntry[]> 
   return results
 }
 
-export async function listDirectoryContentsRecursive(path: string): Promise<FileEntry[]> {
+export async function listDirectoryContentsRecursive(inputPath: string): Promise<FileEntry[]> {
+  const safePath = assertProjectReadPath(inputPath)
   let results: FileEntry[] = []
-  const entries = await readdir(path, { withFileTypes: true })
+  const entries = await readdir(safePath, { withFileTypes: true })
   for (const entry of entries) {
-    const fullPath = join(path, entry.name)
+    const fullPath = assertProjectReadPath(join(safePath, entry.name))
     if (entry.isDirectory()) {
       const subdirectoryContents = await listDirectoryContentsRecursive(fullPath)
       results = results.concat(subdirectoryContents)
@@ -48,11 +62,12 @@ export async function listDirectoryContentsRecursive(path: string): Promise<File
 }
 
 export async function ensureDirectoryExists(path: string): Promise<void> {
+  const safePath = assertProjectWritePath(path)
   try {
-    await stat(path)
+    await stat(safePath)
   } catch (error: any) {
     if (error.code === 'ENOENT') {
-      await mkdir(path, { recursive: true })
+      await mkdir(safePath, { recursive: true })
     }
   }
 }
@@ -67,13 +82,21 @@ export async function getFile(
   path: string,
   returnType: 'buffer' | 'string' | 'stream' = 'buffer'
 ): Promise<Buffer | string | NodeJS.ReadableStream | null> {
+  const safePath = assertProjectReadPath(path)
   try {
-    if (returnType === 'string') {
-      return await readFile(path, 'utf-8')
-    } else if (returnType === 'stream') {
-      return createReadStream(path)
+    if (isStoragePath(safePath)) {
+      const plaintext = await readEncryptedStorageFile(safePath)
+      if (returnType === 'string') return plaintext.toString('utf8')
+      if (returnType === 'stream') return createEncryptedStorageReadStream(safePath)
+      return plaintext
     }
-    return await readFile(path)
+
+    if (returnType === 'string') {
+      return await readFile(safePath, 'utf-8')
+    } else if (returnType === 'stream') {
+      return createReadStream(safePath)
+    }
+    return await readFile(safePath)
   } catch (error: any) {
     if (error.code === 'ENOENT') {
       return null
@@ -85,8 +108,17 @@ export async function getFile(
 export async function getFileStatsIfExists(
   path: string
 ): Promise<{ size: number; modifiedTime: Date } | null> {
+  const safePath = assertProjectReadPath(path)
   try {
-    const stats = await stat(path)
+    const stats = await stat(safePath)
+    if (isStoragePath(safePath) && stats.isFile()) {
+      const metadata = getEncryptedStorageMetadata(safePath)
+      return {
+        size: metadata.plaintextLength ?? metadata.encryptedLength,
+        modifiedTime: stats.mtime,
+      }
+    }
+
     return {
       size: stats.size,
       modifiedTime: stats.mtime,
@@ -106,9 +138,16 @@ export async function getFileStatsIfExists(
  * caught by JS try/catch.
  */
 export async function isValidZimFile(filePath: string): Promise<boolean> {
+  const safePath = assertProjectReadPath(filePath)
   let fh
   try {
-    fh = await open(filePath, 'r')
+    if (isStoragePath(safePath)) {
+      const buf = (await readEncryptedStorageFile(safePath)).subarray(0, 4)
+      if (buf.length < 4) return false
+      return buf[0] === 0x5a && buf[1] === 0x49 && buf[2] === 0x4d && buf[3] === 0x04
+    }
+
+    fh = await open(safePath, 'r')
     const buf = Buffer.alloc(4)
     const { bytesRead } = await fh.read(buf, 0, 4, 0)
     if (bytesRead < 4) return false
@@ -122,8 +161,9 @@ export async function isValidZimFile(filePath: string): Promise<boolean> {
 }
 
 export async function deleteFileIfExists(path: string): Promise<void> {
+  const safePath = assertProjectWritePath(path)
   try {
-    await unlink(path)
+    await unlink(safePath)
   } catch (error: any) {
     if (error.code !== 'ENOENT') {
       throw error
@@ -174,7 +214,9 @@ export function matchesDevice(fsPath: string, deviceName: string): boolean {
   return false
 }
 
-export function determineFileType(filename: string): 'image' | 'pdf' | 'text' | 'epub' | 'zim' | 'unknown' {
+export function determineFileType(
+  filename: string
+): 'image' | 'pdf' | 'text' | 'epub' | 'zim' | 'unknown' {
   const ext = path.extname(filename).toLowerCase()
   if (['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff', '.webp'].includes(ext)) {
     return 'image'

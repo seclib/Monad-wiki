@@ -6,8 +6,8 @@
 
 # Script                | MONAD Installation Script
 # Version               | 1.0.0
-# Author                | Crosstalk Solutions, LLC
-# Website               | https://crosstalksolutions.com
+# Author                | seclib
+# Website               | https://github.com/seclib/monad
 
 ###################################################################################################################################################################################################
 #                                                                                                                                                                                                 #
@@ -29,7 +29,7 @@ GREEN='\033[1;32m' # Light Green.
 ###################################################################################################################################################################################################
 
 WHIPTAIL_TITLE="MONAD Installation"
-MONAD_DIR="/opt/monad"
+MONAD_DIR="${MONAD_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 MANAGEMENT_COMPOSE_FILE_URL="https://raw.githubusercontent.com/seclib/monad/refs/heads/main/install/management_compose.yaml"
 START_SCRIPT_URL="https://raw.githubusercontent.com/seclib/monad/refs/heads/main/install/start_monad.sh"
 STOP_SCRIPT_URL="https://raw.githubusercontent.com/seclib/monad/refs/heads/main/install/stop_monad.sh"
@@ -77,13 +77,13 @@ check_is_bash() {
 }
 
 check_is_debian_based() {
-  if [[ ! -f /etc/debian_version ]]; then
+  if ! command -v docker &> /dev/null; then
     header_red
-    echo -e "${RED}#${RESET} This script is designed to run on Debian-based systems only.\\n"
-    echo -e "${RED}#${RESET} Please run this script on a Debian-based system and try again."
+    echo -e "${RED}#${RESET} Docker is required before running this portable installer.\\n"
+    echo -e "${RED}#${RESET} Install Docker with your operating system's package manager, then run this script again."
     exit 1
   fi
-    echo -e "${GREEN}#${RESET} This script is running on a Debian-based system.\\n"
+    echo -e "${GREEN}#${RESET} Docker command is available.\\n"
 }
 
 check_is_x86_64() {
@@ -109,9 +109,8 @@ ensure_dependencies_installed() {
     missing_deps+=("curl")
   fi
 
-  # Check for gpg (required for NVIDIA container toolkit keyring)
-  if ! command -v gpg &> /dev/null; then
-    missing_deps+=("gpg")
+  if ! command -v openssl &> /dev/null; then
+    missing_deps+=("openssl")
   fi
 
   # Check for whiptail (used for dialogs, though not currently active)
@@ -150,70 +149,28 @@ generateRandomPass() {
   local length="${1:-32}"  # Default to 32
   local password
   
-  # Generate random password using /dev/urandom
-  password=$(tr -dc 'A-Za-z0-9' < /dev/urandom | head -c "$length")
+  password=$(openssl rand -base64 "$length" | tr -dc 'A-Za-z0-9' | head -c "$length")
   
   echo "$password"
 }
 
 ensure_docker_installed() {
   if ! command -v docker &> /dev/null; then
-    echo -e "${YELLOW}#${RESET} Docker not found. Installing Docker...\\n"
-    
-    # Update package database
-    sudo apt-get update
-    
-    # Install prerequisites
-    sudo apt-get install -y ca-certificates curl
-    
-    # Create directory for keyrings
-    # sudo install -m 0755 -d /etc/apt/keyrings
-    
-    # # Download Docker's official GPG key
-    # sudo curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc
-    # sudo chmod a+r /etc/apt/keyrings/docker.asc
-
-    # # Add the repository to Apt sources
-    # echo \
-    #   "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian \
-    #   $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
-    #   sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-
-    # # Update the package database with the Docker packages from the newly added repo
-    # sudo apt-get update
-
-    # # Install Docker packages
-    # sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-
-    # Download the Docker convenience script
-    curl -fsSL https://get.docker.com -o get-docker.sh
-
-    # Run the Docker installation script
-    sudo sh get-docker.sh
-
-    # Check if Docker was installed successfully
-    if ! command -v docker &> /dev/null; then
-      echo -e "${RED}#${RESET} Docker installation failed. Please check the logs and try again."
-      exit 1
-    fi
-    
-    echo -e "${GREEN}#${RESET} Docker installation completed.\\n"
+    header_red
+    echo -e "${RED}#${RESET} Docker not found. This installer does not modify system package sources or services.\\n"
+    echo -e "${RED}#${RESET} Install Docker separately, then run this script again."
+    exit 1
   else
     echo -e "${GREEN}#${RESET} Docker is already installed.\\n"
     
-    # Check if Docker service is running
-    if ! systemctl is-active --quiet docker; then
-      echo -e "${YELLOW}#${RESET} Docker is installed but not running. Attempting to start Docker...\\n"
-      sudo systemctl start docker
-      if ! systemctl is-active --quiet docker; then
-        echo -e "${RED}#${RESET} Failed to start Docker. Please check the Docker service status and try again."
-        exit 1
-      else
-        echo -e "${GREEN}#${RESET} Docker service started successfully.\\n"
-      fi
-    else
-      echo -e "${GREEN}#${RESET} Docker service is already running.\\n"
+    if ! docker info &> /dev/null; then
+      header_red
+      echo -e "${RED}#${RESET} Docker is installed but not reachable by this user/session.\\n"
+      echo -e "${RED}#${RESET} Start Docker externally and ensure this user can run Docker commands, then retry."
+      exit 1
     fi
+
+    echo -e "${GREEN}#${RESET} Docker daemon is reachable.\\n"
   fi
 }
 
@@ -228,8 +185,8 @@ check_docker_compose() {
 }
 
 setup_nvidia_container_toolkit() {
-  # This function attempts to set up NVIDIA GPU support but is non-blocking
-  # Any failures will result in warnings but will NOT stop the installation process
+  # GPU setup is intentionally advisory only. MONAD does not modify host package
+  # sources, daemon configuration, or system services from this portable installer.
   
   echo -e "${YELLOW}#${RESET} Checking for NVIDIA GPU...\\n"
   
@@ -261,95 +218,9 @@ setup_nvidia_container_toolkit() {
     return 0
   fi
   
-  echo -e "${YELLOW}#${RESET} Installing NVIDIA container toolkit...\\n"
-  
-  # Install dependencies per https://docs.ollama.com/docker - wrapped in error handling
-  if ! curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey 2>/dev/null | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg 2>/dev/null; then
-    echo -e "${YELLOW}#${RESET} Warning: Failed to add NVIDIA container toolkit GPG key. Continuing anyway...\\n"
-    return 0
-  fi
-  
-  if ! curl -fsSL https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list 2>/dev/null \
-      | sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' \
-      | sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list > /dev/null 2>&1; then
-    echo -e "${YELLOW}#${RESET} Warning: Failed to add NVIDIA container toolkit repository. Continuing anyway...\\n"
-    return 0
-  fi
-  
-  if ! sudo apt-get update 2>/dev/null; then
-    echo -e "${YELLOW}#${RESET} Warning: Failed to update package list. Continuing anyway...\\n"
-    return 0
-  fi
-  
-  if ! sudo apt-get install -y nvidia-container-toolkit 2>/dev/null; then
-    echo -e "${YELLOW}#${RESET} Warning: Failed to install NVIDIA container toolkit. Continuing anyway...\\n"
-    return 0
-  fi
-  
-  echo -e "${GREEN}#${RESET} NVIDIA container toolkit installed successfully.\\n"
-  
-  # Configure Docker to use NVIDIA runtime
-  echo -e "${YELLOW}#${RESET} Configuring Docker to use NVIDIA runtime...\\n"
-  
-  if ! sudo nvidia-ctk runtime configure --runtime=docker 2>/dev/null; then
-    echo -e "${YELLOW}#${RESET} nvidia-ctk configure failed, attempting manual configuration...\\n"
-    
-    # Fallback: Manually configure daemon.json
-    local daemon_json="/etc/docker/daemon.json"
-    local config_success=false
-    
-    if [[ -f "$daemon_json" ]]; then
-      # Backup existing config (best effort)
-      sudo cp "$daemon_json" "${daemon_json}.backup" 2>/dev/null || true
-      
-      # Check if nvidia runtime already exists
-      if ! grep -q '"nvidia"' "$daemon_json" 2>/dev/null; then
-        # Add nvidia runtime to existing config using jq if available
-        if command -v jq &> /dev/null; then
-          if sudo jq '. + {"runtimes": {"nvidia": {"path": "nvidia-container-runtime", "runtimeArgs": []}}}' "$daemon_json" > /tmp/daemon.json.tmp 2>/dev/null; then
-            if sudo mv /tmp/daemon.json.tmp "$daemon_json" 2>/dev/null; then
-              config_success=true
-            fi
-          fi
-          # Clean up temp file if move failed
-          sudo rm -f /tmp/daemon.json.tmp 2>/dev/null || true
-        else
-          echo -e "${YELLOW}#${RESET} jq not available, skipping manual daemon.json configuration...\\n"
-        fi
-      else
-        config_success=true  # Already configured
-      fi
-    else
-      # Create new daemon.json with nvidia runtime (best effort)
-      if echo '{"runtimes":{"nvidia":{"path":"nvidia-container-runtime","runtimeArgs":[]}}}' | sudo tee "$daemon_json" > /dev/null 2>&1; then
-        config_success=true
-      fi
-    fi
-    
-    if ! $config_success; then
-      echo -e "${YELLOW}#${RESET} Manual daemon.json configuration unsuccessful. GPU support may require manual setup.\\n"
-    fi
-  fi
-  
-  # Restart Docker service
-  echo -e "${YELLOW}#${RESET} Restarting Docker service...\\n"
-  if ! sudo systemctl restart docker 2>/dev/null; then
-    echo -e "${YELLOW}#${RESET} Warning: Failed to restart Docker service. You may need to restart it manually.\\n"
-    return 0
-  fi
-  
-  # Verify NVIDIA runtime is available
-  echo -e "${YELLOW}#${RESET} Verifying NVIDIA runtime configuration...\\n"
-  sleep 2  # Give Docker a moment to fully restart
-  
-  if docker info 2>/dev/null | grep -q "nvidia"; then
-    echo -e "${GREEN}#${RESET} NVIDIA runtime successfully configured and verified.\\n"
-  else
-    echo -e "${YELLOW}#${RESET} Warning: NVIDIA runtime not detected in Docker info. GPU acceleration may not work.\\n"
-    echo -e "${YELLOW}#${RESET} You may need to manually configure /etc/docker/daemon.json and restart Docker.\\n"
-  fi
-  
-  echo -e "${GREEN}#${RESET} NVIDIA container toolkit configuration completed.\\n"
+  echo -e "${YELLOW}#${RESET} NVIDIA GPU detected, but NVIDIA container toolkit is not installed.\\n"
+  echo -e "${YELLOW}#${RESET} Install and configure GPU support outside MONAD, then restart the stack if you need acceleration.\\n"
+  return 0
 }
 
 get_install_confirmation(){
@@ -372,9 +243,9 @@ accept_terms() {
   echo "License Agreement & Terms of Use"
   echo "__________________________"
   printf "\n\n"
-  echo "MONAD is licensed under the Apache License 2.0. The full license can be found at https://www.apache.org/licenses/LICENSE-2.0 or in the LICENSE file of this repository."
+  echo "MONAD is licensed under the MIT License. The full license can be found at https://opensource.org/license/mit or in the LICENSE file of this repository."
   printf "\n"
-  echo "By accepting this agreement, you acknowledge that you have read and understood the terms and conditions of the Apache License 2.0 and agree to be bound by them while using MONAD"
+  echo "By accepting this agreement, you acknowledge that you have read and understood the terms of the MIT License and agree to be bound by them while using MONAD"
   echo -e "\n\n"
   read -p "I have read and accept License Agreement & Terms of Use (y/N)? " choice
   case "$choice" in
@@ -400,11 +271,10 @@ create_monad_directory(){
     echo -e "${GREEN}#${RESET} Directory $MONAD_DIR already exists.\\n"
   fi
 
-  # Also ensure the directory has a /storage/logs/ subdirectory
-  sudo mkdir -p "${MONAD_DIR}/storage/logs"
+  sudo mkdir -p "${MONAD_DIR}/storage" "${MONAD_DIR}/logs" "${MONAD_DIR}/cache" "${MONAD_DIR}/config" "${MONAD_DIR}/models" "${MONAD_DIR}/data"
 
-  # Create a admin.log file in the logs directory
-  sudo touch "${MONAD_DIR}/storage/logs/admin.log"
+  # Create the project-local application log file.
+  sudo touch "${MONAD_DIR}/logs/app.log"
 }
 
 download_management_compose_file() {
@@ -560,7 +430,7 @@ verify_gpu_setup() {
   # Write detected GPU type to a marker file the admin container can read. The admin
   # container lacks lspci and AMD GPUs don't register a Docker runtime, so this is the
   # only reliable way for the admin to know an AMD GPU is present at install time.
-  local gpu_marker_path="${MONAD_DIR}/storage/.monad-gpu-type"
+  local gpu_marker_path="${MONAD_DIR}/config/monad-gpu-type"
   if command -v nvidia-smi &> /dev/null; then
     echo 'nvidia' | sudo tee "${gpu_marker_path}" > /dev/null 2>&1 || true
   elif [[ "${has_amd_gpu}" == 'true' ]]; then
@@ -572,7 +442,7 @@ verify_gpu_setup() {
   # Companion marker used by the admin to pick the right HSA_OVERRIDE_GFX_VERSION for
   # the detected card. Absence of this file means "unknown gfx" — the admin falls back
   # to its built-in default. Always rewrite (or remove) on install to keep state fresh.
-  local amd_gfx_marker_path="${MONAD_DIR}/storage/.monad-amd-gfx"
+  local amd_gfx_marker_path="${MONAD_DIR}/config/monad-amd-gfx"
   if [[ -n "${amd_gfx_version}" ]]; then
     echo "${amd_gfx_version}" | sudo tee "${amd_gfx_marker_path}" > /dev/null 2>&1 || true
   else
@@ -597,7 +467,7 @@ verify_gpu_setup() {
 
 success_message() {
   echo -e "${GREEN}#${RESET} MONAD installation completed successfully!\\n"
-  echo -e "${GREEN}#${RESET} Installation files are located at /opt/monad\\n\n"
+  echo -e "${GREEN}#${RESET} Installation files are located at ${MONAD_DIR}\\n\n"
   echo -e "${GREEN}#${RESET} MONAD's Command Center should automatically start whenever your device reboots. However, if you need to start it manually, you can always do so by running: ${WHITE_R}${MONAD_DIR}/start_monad.sh${RESET}\\n"
   echo -e "${GREEN}#${RESET} You can now access the management interface at http://localhost:8080 or http://${local_ip_address}:8080\\n"
   echo -e "${GREEN}#${RESET} Thank you for supporting MONAD!\\n"

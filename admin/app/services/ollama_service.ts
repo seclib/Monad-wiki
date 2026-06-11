@@ -19,10 +19,41 @@ import { BROADCAST_CHANNELS } from '../../constants/broadcast.js'
 import env from '#start/env'
 import { MONAD_API_DEFAULT_BASE_URL } from '../../constants/misc.js'
 import KVStore from '#models/kv_store'
+import { CACHE_PATH, assertProjectReadPath, assertProjectWritePath } from '../utils/paths.js'
 
 const MONAD_MODELS_API_PATH = '/api/v1/ollama/models'
-const MODELS_CACHE_FILE = path.join(process.cwd(), 'storage', 'ollama-models-cache.json')
+const MODELS_CACHE_FILE = assertProjectWritePath(path.join(CACHE_PATH, 'ollama-models-cache.json'))
 const CACHE_MAX_AGE_MS = 24 * 60 * 60 * 1000 // 24 hours
+
+function isLocalAiUrl(rawUrl: string): boolean {
+  try {
+    const { hostname } = new URL(rawUrl)
+    const host = hostname.replace(/^\[|\]$/g, '').toLowerCase()
+    const ipv4 = host.split('.').map((part) => Number.parseInt(part, 10))
+
+    if (
+      host === 'localhost' ||
+      host === 'host.docker.internal' ||
+      host.endsWith('.local') ||
+      host === '::1' ||
+      host.startsWith('127.')
+    ) {
+      return true
+    }
+
+    if (ipv4.length === 4 && ipv4.every((part) => Number.isInteger(part))) {
+      return (
+        ipv4[0] === 10 ||
+        (ipv4[0] === 172 && ipv4[1] >= 16 && ipv4[1] <= 31) ||
+        (ipv4[0] === 192 && ipv4[1] === 168)
+      )
+    }
+
+    return false
+  } catch {
+    return false
+  }
+}
 
 export type MonadInstalledModel = {
   name: string
@@ -67,10 +98,16 @@ export class OllamaService {
     if (!this.initPromise) {
       this.initPromise = (async () => {
         // Check KVStore for a custom base URL (remote Ollama, LM Studio, llama.cpp, etc.)
+        const offlineMode = env.get('MONAD_OFFLINE_MODE') ?? false
         const customUrl = (await KVStore.getValue('ai.remoteOllamaUrl')) as string | null
-        if (customUrl && customUrl.trim()) {
+        if (customUrl && customUrl.trim() && (!offlineMode || isLocalAiUrl(customUrl.trim()))) {
           this.baseUrl = customUrl.trim().replace(/\/$/, '')
         } else if (env.get('OLLAMA_BASE_URL')) {
+          if (customUrl && customUrl.trim() && offlineMode) {
+            logger.warn(
+              `[OllamaService] Ignoring non-local ai.remoteOllamaUrl while MONAD_OFFLINE_MODE=true: ${customUrl}`
+            )
+          }
           this.baseUrl = env.get('OLLAMA_BASE_URL')!.trim().replace(/\/$/, '')
         } else {
           // Backward-compatible fallback for existing MONAD installs. New local-first
@@ -848,7 +885,7 @@ export class OllamaService {
       return this.sortModels(noCloud, sort)
     } catch (error) {
       logger.error(
-        `[OllamaService] Failed to retrieve models from Monad API: ${error instanceof Error ? error.message : error}`
+        `[OllamaService] Failed to retrieve models from MONAD API: ${error instanceof Error ? error.message : error}`
       )
       return null
     }
@@ -864,7 +901,7 @@ export class OllamaService {
         return null
       }
 
-      const cacheData = await fs.readFile(MODELS_CACHE_FILE, 'utf-8')
+      const cacheData = await fs.readFile(assertProjectReadPath(MODELS_CACHE_FILE), 'utf-8')
       const models = JSON.parse(cacheData) as MonadOllamaModel[]
 
       if (!Array.isArray(models)) {
@@ -885,8 +922,12 @@ export class OllamaService {
 
   private async writeModelsToCache(models: MonadOllamaModel[]): Promise<void> {
     try {
-      await fs.mkdir(path.dirname(MODELS_CACHE_FILE), { recursive: true })
-      await fs.writeFile(MODELS_CACHE_FILE, JSON.stringify(models, null, 2), 'utf-8')
+      await fs.mkdir(assertProjectWritePath(path.dirname(MODELS_CACHE_FILE)), { recursive: true })
+      await fs.writeFile(
+        assertProjectWritePath(MODELS_CACHE_FILE),
+        JSON.stringify(models, null, 2),
+        'utf-8'
+      )
       logger.info('[OllamaService] Successfully cached available models')
     } catch (error) {
       logger.warn(

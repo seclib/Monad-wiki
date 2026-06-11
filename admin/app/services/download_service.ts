@@ -10,6 +10,7 @@ import { normalize } from 'path'
 import { deleteFileIfExists } from '../utils/fs.js'
 import transmit from '@adonisjs/transmit/services/main'
 import { BROADCAST_CHANNELS } from '../../constants/broadcast.js'
+import logger from '@adonisjs/core/services/logger'
 
 type FileJobState = 'waiting' | 'active' | 'delayed' | 'failed'
 type TaggedJob = { job: Job; state: FileJobState }
@@ -291,7 +292,7 @@ export class DownloadService {
       }
     }
 
-    console.warn(
+    logger.warn(
       `[DownloadService] cancelJob: job ${jobId} did not reach terminal state within timeout, removing anyway`
     )
   }

@@ -4,15 +4,15 @@
 #
 # Script                | MONAD One-Time Updater Fix Script
 # Version               | 1.0.0
-# Author                | Crosstalk Solutions, LLC
-# Website               | https://crosstalksolutions.com
+# Author                | seclib
+# Website               | https://github.com/seclib/monad
 #
 # PURPOSE:
 #   This is a one-time migration script. It deploys two fixes to the sidecar
 #   updater that cannot be applied through the normal in-app update mechanism:
 #
 #   Fix 1 — Sidecar volume write access
-#     Removes the :ro (read-only) flag from the sidecar's /opt/monad
+#     Removes the :ro (read-only) flag from the sidecar's ${MONAD_DIR}
 #     volume mount in compose.yml. The sidecar must be able to write to
 #     compose.yml so it can set the correct Docker image tag when installing
 #     RC or stable versions.
@@ -40,7 +40,7 @@ WHITE_R='\033[39m'
 # Constants
 ###############################################################################
 
-MONAD_DIR="/opt/monad"
+MONAD_DIR="${MONAD_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 COMPOSE_FILE="${MONAD_DIR}/compose.yml"
 SIDECAR_DIR="${MONAD_DIR}/sidecar-updater"
 COMPOSE_PROJECT_NAME="monad"
@@ -129,17 +129,17 @@ backup_compose_file() {
 
 fix_sidecar_volume_mount() {
   # Idempotent: skip if :ro is already absent from the sidecar mount line
-  if ! grep -q '/opt/monad:/opt/monad:ro' "$COMPOSE_FILE"; then
+  if ! grep -q '${MONAD_DIR}:${MONAD_DIR}:ro' "$COMPOSE_FILE"; then
     echo -e "${GREEN}#${RESET} Sidecar volume mount is already writable — no change needed.\n"
     return 0
   fi
 
   echo -e "${YELLOW}#${RESET} Removing :ro restriction from sidecar volume mount in compose.yml..."
-  sed -i 's|/opt/monad:/opt/monad:ro.*|/opt/monad:/opt/monad # Writable access required so the updater can set the correct image tag in compose.yml|' "$COMPOSE_FILE"
+  sed -i 's|${MONAD_DIR}:${MONAD_DIR}:ro.*|${MONAD_DIR}:${MONAD_DIR} # Writable access required so the updater can set the correct image tag in compose.yml|' "$COMPOSE_FILE"
 
-  if grep -q '/opt/monad:/opt/monad:ro' "$COMPOSE_FILE"; then
+  if grep -q '${MONAD_DIR}:${MONAD_DIR}:ro' "$COMPOSE_FILE"; then
     echo -e "${RED}#${RESET} Failed to remove :ro from compose.yml. Please update it manually:"
-    echo -e "${WHITE_R}    - /opt/monad:/opt/monad:ro${RESET}  →  ${WHITE_R}- /opt/monad:/opt/monad${RESET}"
+    echo -e "${WHITE_R}    - ${MONAD_DIR}:${MONAD_DIR}:ro${RESET}  →  ${WHITE_R}- ${MONAD_DIR}:${MONAD_DIR}${RESET}"
     exit 1
   fi
 

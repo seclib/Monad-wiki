@@ -4,22 +4,18 @@
 #
 # Script                | MONAD Disk Collector Migration Script
 # Version               | 1.0.0
-# Author                | Crosstalk Solutions, LLC
-# Website               | https://crosstalksolutions.com
+# Author                | seclib
+# Website               | https://github.com/seclib/monad
 #
 # PURPOSE:
 #   One-time migration from the host-based disk info collector to the
 #   disk-collector Docker sidecar. The old approach used a nohup background
-#   process that wrote to /tmp/monad-disk-info.json, which was bind-mounted
-#   into the admin container. This broke on host reboots because /tmp is
-#   cleared and Docker would create a directory at the mount point instead of a file.
+#   process that wrote an external disk-info file, which was bind-mounted
+#   into the admin container. This could break on host reboots when that
+#   external location disappeared.
 #
-#   The new approach uses a disk-collector sidecar container that reads host
-#   disk info via the /:/host:ro,rslave bind-mount pattern (same pattern as Prometheus
-#   node-exporter, and no SYS_ADMIN or privileged capabilities required) and writes directly to
-#   /opt/monad/storage/monad-disk-info.json, which the admin container
-#   already reads via its existing storage bind-mount. Thus, no admin image update
-#   or new volume mounts required.
+#   The new approach writes directly to project-local cache/monad-disk-info.json,
+#   which the admin container already reads via its existing storage bind-mount.
 
 ###############################################################################
 # Color Codes
@@ -35,7 +31,7 @@ WHITE_R='\033[39m'
 # Constants
 ###############################################################################
 
-MONAD_DIR="/opt/monad"
+MONAD_DIR="${MONAD_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 COMPOSE_FILE="${MONAD_DIR}/compose.yml"
 COMPOSE_PROJECT_NAME="monad"
 
@@ -66,10 +62,10 @@ check_confirmation() {
   echo -e "${YELLOW}#${RESET} This script migrates your MONAD installation from the"
   echo -e "${YELLOW}#${RESET} host-based disk info collector to the new disk-collector sidecar."
   echo -e "${YELLOW}#${RESET} It will modify compose.yml and restart the full compose stack"
-  echo -e "${YELLOW}#${RESET} to drop the old /tmp bind mount and start the disk-collector sidecar."
+  echo -e "${YELLOW}#${RESET} to drop the old external bind mount and start the disk-collector sidecar."
   echo -e "${YELLOW}#${RESET} Please ensure you have a backup of your data before proceeding.\n"
 
-  echo -e "${RED}#${RESET} STOP: If you have customized your compose.yml or Monad's storage setup (not common), please make these changes manually instead of using this script!\n"
+  echo -e "${RED}#${RESET} STOP: If you have customized your compose.yml or MONAD's storage setup (not common), please make these changes manually instead of using this script!\n"
   read -rp "Do you want to continue? (y/N) " response
   if [[ ! "$response" =~ ^[Yy]$ ]]; then
     echo -e "${RED}#${RESET} Aborting. No changes have been made."
@@ -133,16 +129,16 @@ backup_compose_file() {
 # Step 3: Remove old bind-mount from admin volumes
 remove_old_bind_mount() {
   if ! grep -q 'monad-disk-info\.json' "$COMPOSE_FILE"; then
-    echo -e "${GREEN}#${RESET} Old /tmp/monad-disk-info.json bind-mount not found — already removed.\n"
+    echo -e "${GREEN}#${RESET} Old storage/monad-disk-info.json bind-mount not found — already removed.\n"
     return 0
   fi
 
-  echo -e "${YELLOW}#${RESET} Removing old /tmp/monad-disk-info.json bind-mount from admin volumes..."
-  sed -i '/\/tmp\/monad-disk-info\.json:\/app\/storage\/monad-disk-info\.json/d' "$COMPOSE_FILE"
+  echo -e "${YELLOW}#${RESET} Removing old storage/monad-disk-info.json bind-mount from admin volumes..."
+  sed -i '/monad-disk-info\.json:\/app\/storage\/monad-disk-info\.json/d' "$COMPOSE_FILE"
 
   if grep -q 'monad-disk-info\.json' "$COMPOSE_FILE"; then
     echo -e "${RED}#${RESET} Failed to remove old bind-mount from compose.yml. Please remove it manually:"
-    echo -e "${WHITE_R}      - /tmp/monad-disk-info.json:/app/storage/monad-disk-info.json${RESET}"
+    echo -e "${WHITE_R}      - storage/monad-disk-info.json:/app/storage/monad-disk-info.json${RESET}"
     exit 1
   fi
 
@@ -161,13 +157,13 @@ add_disk_collector_service() {
   # Insert the disk-collector service block before the top-level `volumes:` key
   awk '/^volumes:/{
     print "  disk-collector:"
-    print "    image: ghcr.io/crosstalk-solutions/project-nomad-disk-collector:latest"
+    print "    image: ghcr.io/seclib/monad-disk-collector:latest"
     print "    pull_policy: always"
     print "    container_name: monad_disk_collector"
     print "    restart: unless-stopped"
     print "    volumes:"
-    print "      - /:/host:ro,rslave  # Read-only view of host FS with rslave propagation so /sys and /proc submounts are visible"
-    print "      - /opt/monad/storage:/storage  # Shared storage dir — disk info written here is read by the admin container"
+    print "      - ${MONAD_DIR}/storage:/storage:ro  # Project-local storage dir used only for disk sizing"
+    print "      - ${MONAD_DIR}/cache:/cache  # Project-local cache dir for disk metadata"
     print ""
   }
   {print}' "$COMPOSE_FILE" > "${COMPOSE_FILE}.tmp" && mv "${COMPOSE_FILE}.tmp" "$COMPOSE_FILE"
@@ -181,7 +177,7 @@ add_disk_collector_service() {
 }
 
 # Step 5 — Pull new image and restart the full stack
-# This will re-create the admin container and drop the old /tmp bind, and
+# This will re-create the admin container and drop the old external bind, and
 # also starts the new disk-collector sidecar we just added to compose.yml
 restart_stack() {
   echo -e "${YELLOW}#${RESET} Pulling latest images (including disk-collector)..."

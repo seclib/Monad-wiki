@@ -22,7 +22,7 @@ export default class OllamaController {
     private dockerService: DockerService,
     private ollamaService: OllamaService,
     private ragService: RagService
-  ) { }
+  ) {}
 
   async availableModels({ request }: HttpContext) {
     const reqData = await request.validateUsing(getAvailableModelsSchema)
@@ -84,7 +84,9 @@ export default class OllamaController {
           0.3 // Minimum similarity score of 0.3
         )
 
-        logger.debug(`[RAG] Retrieved ${relevantDocs.length} relevant documents for query: "${rewrittenQuery}"`)
+        logger.debug(
+          `[RAG] Retrieved ${relevantDocs.length} relevant documents for query: "${rewrittenQuery}"`
+        )
 
         // If relevant context is found, inject as a system message with adaptive limits
         if (relevantDocs.length > 0) {
@@ -108,7 +110,10 @@ export default class OllamaController {
           )
 
           const contextText = trimmedDocs
-            .map((doc, idx) => `[Context ${idx + 1}] (Relevance: ${(doc.score * 100).toFixed(1)}%)\n${doc.text}`)
+            .map(
+              (doc, idx) =>
+                `[Context ${idx + 1}] (Relevance: ${(doc.score * 100).toFixed(1)}%)\n${doc.text}`
+            )
             .join('\n\n')
 
           const systemMessage = {
@@ -133,13 +138,19 @@ export default class OllamaController {
       if (estimatedSystemTokens > 3000) {
         const needed = estimatedSystemTokens + 2048 // leave room for conversation + response
         numCtx = [8192, 16384, 32768, 65536].find((n) => n >= needed) ?? 65536
-        logger.debug(`[OllamaController] Large system prompt (~${estimatedSystemTokens} tokens), requesting num_ctx: ${numCtx}`)
+        logger.debug(
+          `[OllamaController] Large system prompt (~${estimatedSystemTokens} tokens), requesting num_ctx: ${numCtx}`
+        )
       }
 
       // Check if the model supports "thinking" capability for enhanced response generation
       // If gpt-oss model, it requires a text param for "think" https://docs.ollama.com/api/chat
       const thinkingCapability = await this.ollamaService.checkModelHasThinking(reqData.model)
-      const think: boolean | 'medium' = thinkingCapability ? (reqData.model.startsWith('gpt-oss') ? 'medium' : true) : false
+      const think: boolean | 'medium' = thinkingCapability
+        ? reqData.model.startsWith('gpt-oss')
+          ? 'medium'
+          : true
+        : false
 
       // Separate sessionId from the Ollama request payload — Ollama rejects unknown fields
       const { sessionId, ...ollamaRequest } = reqData
@@ -155,7 +166,9 @@ export default class OllamaController {
       }
 
       if (reqData.stream) {
-        logger.debug(`[OllamaController] Initiating streaming response for model: "${reqData.model}" with think: ${think}`)
+        logger.debug(
+          `[OllamaController] Initiating streaming response for model: "${reqData.model}" with think: ${think}`
+        )
         // Headers already flushed above
         const stream = await this.ollamaService.chatStream({ ...ollamaRequest, think, numCtx })
         let fullContent = ''
@@ -172,9 +185,13 @@ export default class OllamaController {
           await this.chatService.addMessage(sessionId, 'assistant', fullContent)
           const messageCount = await this.chatService.getMessageCount(sessionId)
           if (messageCount <= 2 && userContent) {
-            this.chatService.generateTitle(sessionId, userContent, fullContent, reqData.model).catch((err) => {
-              logger.error(`[OllamaController] Title generation failed: ${err instanceof Error ? err.message : err}`)
-            })
+            this.chatService
+              .generateTitle(sessionId, userContent, fullContent, reqData.model)
+              .catch((err) => {
+                logger.error(
+                  `[OllamaController] Title generation failed: ${err instanceof Error ? err.message : err}`
+                )
+              })
           }
         }
         return
@@ -187,9 +204,13 @@ export default class OllamaController {
         await this.chatService.addMessage(sessionId, 'assistant', result.message.content)
         const messageCount = await this.chatService.getMessageCount(sessionId)
         if (messageCount <= 2 && userContent) {
-          this.chatService.generateTitle(sessionId, userContent, result.message.content, reqData.model).catch((err) => {
-            logger.error(`[OllamaController] Title generation failed: ${err instanceof Error ? err.message : err}`)
-          })
+          this.chatService
+            .generateTitle(sessionId, userContent, result.message.content, reqData.model)
+            .catch((err) => {
+              logger.error(
+                `[OllamaController] Title generation failed: ${err instanceof Error ? err.message : err}`
+              )
+            })
         }
       }
 
@@ -224,7 +245,9 @@ export default class OllamaController {
 
     const ollamaService = await Service.query().where('service_name', SERVICE_NAMES.OLLAMA).first()
     if (!ollamaService) {
-      return response.status(404).send({ success: false, message: 'Ollama service record not found.' })
+      return response
+        .status(404)
+        .send({ success: false, message: 'Ollama service record not found.' })
     }
 
     // Clear path: null or empty URL removes remote config. If a local monad_ollama container
@@ -301,7 +324,7 @@ export default class OllamaController {
     // Mirror post-install side effects: disable suggestions, trigger docs discovery
     await KVStore.setValue('chat.suggestionsEnabled', false)
     this.ragService.discoverMonadDocs().catch((error) => {
-      logger.error('[OllamaController] Failed to discover Monad docs:', error)
+      logger.error('[OllamaController] Failed to discover MONAD docs:', error)
     })
 
     return { success: true, message: 'Remote Ollama configured.' }
@@ -310,9 +333,7 @@ export default class OllamaController {
   private async _stopLocalOllamaContainer(): Promise<void> {
     try {
       const containers = await this.dockerService.docker.listContainers({ all: true })
-      const ollamaContainer = containers.find((c) =>
-        c.Names.includes(`/${SERVICE_NAMES.OLLAMA}`)
-      )
+      const ollamaContainer = containers.find((c) => c.Names.includes(`/${SERVICE_NAMES.OLLAMA}`))
       if (!ollamaContainer || ollamaContainer.State !== 'running') {
         return
       }
@@ -330,9 +351,7 @@ export default class OllamaController {
   private async _startLocalOllamaContainerIfExists(): Promise<boolean> {
     try {
       const containers = await this.dockerService.docker.listContainers({ all: true })
-      const ollamaContainer = containers.find((c) =>
-        c.Names.includes(`/${SERVICE_NAMES.OLLAMA}`)
-      )
+      const ollamaContainer = containers.find((c) => c.Names.includes(`/${SERVICE_NAMES.OLLAMA}`))
       if (!ollamaContainer) {
         return false
       }
@@ -369,7 +388,7 @@ export default class OllamaController {
     }
   }
 
-  async installedModels({ }: HttpContext) {
+  async installedModels({}: HttpContext) {
     return await this.ollamaService.getModels()
   }
 
@@ -396,7 +415,7 @@ export default class OllamaController {
     messages: Message[],
     model: string
   ): Promise<string | null> {
-    const lastUserMessage = [...messages].reverse().find(msg => msg.role === 'user')
+    const lastUserMessage = [...messages].reverse().find((msg) => msg.role === 'user')
 
     try {
       // Skip the entire RAG pipeline if there are no documents to search
@@ -415,18 +434,19 @@ export default class OllamaController {
       // entities and topics from earlier turns ("the bars" → "Hershey's bars
       // chocolate poisoning dog"); without it, embeddings match nothing and
       // the assistant loses the thread.
-      const userMessages = recentMessages.filter(msg => msg.role === 'user')
+      const userMessages = recentMessages.filter((msg) => msg.role === 'user')
       if (userMessages.length < 2) {
         return lastUserMessage?.content || null
       }
 
       const conversationContext = recentMessages
-        .map(msg => {
+        .map((msg) => {
           const role = msg.role === 'user' ? 'User' : 'Assistant'
           // Truncate assistant messages to first 200 chars to keep context manageable
-          const content = msg.role === 'assistant'
-            ? msg.content.slice(0, 200) + (msg.content.length > 200 ? '...' : '')
-            : msg.content
+          const content =
+            msg.role === 'assistant'
+              ? msg.content.slice(0, 200) + (msg.content.length > 200 ? '...' : '')
+              : msg.content
           return `${role}: "${content}"`
         })
         .join('\n')

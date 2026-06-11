@@ -1,0 +1,11 @@
+{
+  "project": "MONAD",
+  "mode": "local-first",
+  "memory": {
+    "storage_path": "storage/memory",
+    "index_path": "storage/db/memory_index.enc",
+    "encryption": "AES-256-GCM",
+    "allow_plaintext_index": false,
+    "allow_external_transmission": false
+  }
+}

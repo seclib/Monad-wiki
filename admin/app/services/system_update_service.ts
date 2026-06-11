@@ -1,8 +1,9 @@
 import logger from '@adonisjs/core/services/logger'
 import { readFileSync, existsSync } from 'fs'
-import { writeFile } from 'fs/promises'
+import { mkdir, writeFile } from 'fs/promises'
 import { join } from 'path'
 import KVStore from '#models/kv_store'
+import { CACHE_PATH, assertProjectReadPath, assertProjectWritePath } from '../utils/paths.js'
 
 interface UpdateStatus {
   stage: 'idle' | 'starting' | 'pulling' | 'pulled' | 'recreating' | 'complete' | 'error'
@@ -12,10 +13,16 @@ interface UpdateStatus {
 }
 
 export class SystemUpdateService {
-  private static SHARED_DIR = '/app/update-shared'
-  private static REQUEST_FILE = join(SystemUpdateService.SHARED_DIR, 'update-request')
-  private static STATUS_FILE = join(SystemUpdateService.SHARED_DIR, 'update-status')
-  private static LOG_FILE = join(SystemUpdateService.SHARED_DIR, 'update-log')
+  private static SHARED_DIR = assertProjectWritePath(join(CACHE_PATH, 'update-shared'))
+  private static REQUEST_FILE = assertProjectWritePath(
+    join(SystemUpdateService.SHARED_DIR, 'update-request')
+  )
+  private static STATUS_FILE = assertProjectReadPath(
+    join(SystemUpdateService.SHARED_DIR, 'update-status')
+  )
+  private static LOG_FILE = assertProjectReadPath(
+    join(SystemUpdateService.SHARED_DIR, 'update-log')
+  )
 
   /**
    * Requests a system update by creating a request file that the sidecar will detect
@@ -39,8 +46,11 @@ export class SystemUpdateService {
         target_tag: latestVersion ? `v${latestVersion}` : 'latest',
       }
 
+      await mkdir(SystemUpdateService.SHARED_DIR, { recursive: true })
       await writeFile(SystemUpdateService.REQUEST_FILE, JSON.stringify(requestData, null, 2))
-      logger.info(`[SystemUpdateService]: System update requested (target tag: ${requestData.target_tag}) - sidecar will process shortly`)
+      logger.info(
+        `[SystemUpdateService]: System update requested (target tag: ${requestData.target_tag}) - sidecar will process shortly`
+      )
 
       return {
         success: true,
@@ -57,7 +67,8 @@ export class SystemUpdateService {
 
   getUpdateStatus(): UpdateStatus | null {
     try {
-      if (!existsSync(SystemUpdateService.STATUS_FILE)) {
+      const statusFile = assertProjectReadPath(SystemUpdateService.STATUS_FILE)
+      if (!existsSync(statusFile)) {
         return {
           stage: 'idle',
           progress: 0,
@@ -66,7 +77,7 @@ export class SystemUpdateService {
         }
       }
 
-      const statusContent = readFileSync(SystemUpdateService.STATUS_FILE, 'utf-8')
+      const statusContent = readFileSync(statusFile, 'utf-8')
       return JSON.parse(statusContent) as UpdateStatus
     } catch (error) {
       logger.error('[SystemUpdateService]: Failed to read update status:', error)
@@ -76,11 +87,12 @@ export class SystemUpdateService {
 
   getUpdateLogs(): string {
     try {
-      if (!existsSync(SystemUpdateService.LOG_FILE)) {
+      const logFile = assertProjectReadPath(SystemUpdateService.LOG_FILE)
+      if (!existsSync(logFile)) {
         return 'No update logs available'
       }
 
-      return readFileSync(SystemUpdateService.LOG_FILE, 'utf-8')
+      return readFileSync(logFile, 'utf-8')
     } catch (error) {
       logger.error('[SystemUpdateService]: Failed to read update logs:', error)
       return `Error reading logs: ${error.message}`
@@ -92,7 +104,7 @@ export class SystemUpdateService {
    */
   isSidecarAvailable(): boolean {
     try {
-      return existsSync(SystemUpdateService.SHARED_DIR)
+      return existsSync(assertProjectReadPath(SystemUpdateService.SHARED_DIR))
     } catch (error) {
       return false
     }

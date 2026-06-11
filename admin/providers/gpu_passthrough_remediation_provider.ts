@@ -32,7 +32,6 @@ export default class GpuPassthroughRemediationProvider {
         const env = (await import('#start/env')).default
         const { DockerService } = await import('#services/docker_service')
         const { SERVICE_NAMES } = await import('../constants/service_names.js')
-        const Docker = (await import('dockerode')).default
 
         const enabledRaw = await KVStore.getValue('ai.autoFixGpuPassthrough')
         if (String(enabledRaw) === 'false') {
@@ -47,7 +46,15 @@ export default class GpuPassthroughRemediationProvider {
           return
         }
 
-        const docker = new Docker({ socketPath: '/var/run/docker.sock' })
+        const dockerService = new DockerService()
+        if (!dockerService.hasDockerAccess()) {
+          logger.info(
+            '[GpuPassthroughRemediationProvider] Docker control disabled — skipping GPU remediation.'
+          )
+          return
+        }
+
+        const docker = dockerService.docker
         const dockerInfo = await docker.info()
         const runtimes = dockerInfo.Runtimes || {}
         const hasNvidiaRuntime = 'nvidia' in runtimes
@@ -102,7 +109,6 @@ export default class GpuPassthroughRemediationProvider {
             'Auto-reinstalling monad_ollama; volumes and installed models are preserved.'
         )
 
-        const dockerService = new DockerService()
         const result = await dockerService.forceReinstall(SERVICE_NAMES.OLLAMA)
 
         if (result.success) {

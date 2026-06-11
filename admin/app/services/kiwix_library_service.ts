@@ -1,10 +1,16 @@
 import { XMLBuilder, XMLParser } from 'fast-xml-parser'
-import { readFile, writeFile, rename, readdir } from 'fs/promises'
+import { readFile, readdir, rename, writeFile } from 'fs/promises'
 import { join } from 'path'
 import { Archive } from '@openzim/libzim'
-import { KIWIX_LIBRARY_XML_PATH, ZIM_STORAGE_PATH, ensureDirectoryExists, isValidZimFile } from '../utils/fs.js'
+import {
+  KIWIX_LIBRARY_XML_PATH,
+  ZIM_STORAGE_PATH,
+  ensureDirectoryExists,
+  isValidZimFile,
+} from '../utils/fs.js'
 import logger from '@adonisjs/core/services/logger'
 import { randomUUID } from 'node:crypto'
+import { assertProjectReadPath, assertProjectWritePath } from '../utils/paths.js'
 
 const CONTAINER_DATA_PATH = '/data'
 const XML_DECLARATION = '<?xml version="1.0" encoding="UTF-8"?>\n'
@@ -148,8 +154,8 @@ export class KiwixLibraryService {
   }
 
   private async _atomicWrite(content: string): Promise<void> {
-    const filePath = this.getLibraryFilePath()
-    const tmpPath = `${filePath}.tmp.${randomUUID()}`
+    const filePath = assertProjectWritePath(this.getLibraryFilePath())
+    const tmpPath = assertProjectWritePath(`${filePath}.tmp.${randomUUID()}`)
     await writeFile(tmpPath, content, 'utf-8')
     await rename(tmpPath, filePath)
   }
@@ -179,8 +185,7 @@ export class KiwixLibraryService {
         faviconMimeType: b['@_faviconMimeType'],
         favicon: b['@_favicon'],
         date: b['@_date'],
-        articleCount:
-          b['@_articleCount'] !== undefined ? Number(b['@_articleCount']) : undefined,
+        articleCount: b['@_articleCount'] !== undefined ? Number(b['@_articleCount']) : undefined,
         mediaCount: b['@_mediaCount'] !== undefined ? Number(b['@_mediaCount']) : undefined,
         size: b['@_size'] !== undefined ? Number(b['@_size']) : undefined,
       }))
@@ -231,7 +236,7 @@ export class KiwixLibraryService {
     let existingBooks: KiwixBook[] = []
 
     try {
-      const content = await readFile(filePath, 'utf-8')
+      const content = await readFile(assertProjectReadPath(filePath), 'utf-8')
       existingBooks = this._parseExistingBooks(content)
     } catch (err: any) {
       if (err.code === 'ENOENT') {
@@ -275,7 +280,7 @@ export class KiwixLibraryService {
     let existingBooks: KiwixBook[] = []
 
     try {
-      const content = await readFile(filePath, 'utf-8')
+      const content = await readFile(assertProjectReadPath(filePath), 'utf-8')
       existingBooks = this._parseExistingBooks(content)
     } catch (err: any) {
       if (err.code === 'ENOENT') {

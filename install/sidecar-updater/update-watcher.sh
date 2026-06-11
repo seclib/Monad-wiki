@@ -2,11 +2,11 @@
 
 # MONAD Update Sidecar - Polls for update requests and executes them
 
-SHARED_DIR="/shared"
+SHARED_DIR="${MONAD_UPDATE_SHARED_DIR:-.}"
 REQUEST_FILE="${SHARED_DIR}/update-request"
 STATUS_FILE="${SHARED_DIR}/update-status"
 LOG_FILE="${SHARED_DIR}/update-log"
-COMPOSE_FILE="/opt/monad/compose.yml"
+COMPOSE_FILE="${MONAD_COMPOSE_FILE:-monad-project/compose.yml}"
 COMPOSE_PROJECT_NAME="monad"
 
 log() {
@@ -43,7 +43,7 @@ perform_update() {
 
     # Apply target image tag to compose.yml before pulling
     log "Applying image tag '${target_tag}' to compose.yml..."
-    if sed -i "s|\(image: ghcr\.io/crosstalk-solutions/project-nomad\):.*|\1:${target_tag}|" "$COMPOSE_FILE" 2>> "$LOG_FILE"; then
+    if sed -i "s|\(image: ghcr\.io/seclib/monad\):[A-Za-z0-9_.+-]\+|\1:${target_tag}|" "$COMPOSE_FILE" 2>> "$LOG_FILE"; then
         log "Successfully updated compose.yml admin image tag to '${target_tag}'"
     else
         log "ERROR: Failed to update compose.yml image tag"

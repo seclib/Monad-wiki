@@ -4,6 +4,7 @@ import axios from 'axios'
 import InstalledResource from '#models/installed_resource'
 import { RunDownloadJob } from '../jobs/run_download_job.js'
 import { ZIM_STORAGE_PATH } from '../utils/fs.js'
+import { DATA_PATH, relativeProjectPath } from '../utils/paths.js'
 import { join } from 'path'
 import type {
   ResourceUpdateCheckRequest,
@@ -12,7 +13,7 @@ import type {
 } from '../../types/collections.js'
 import { MONAD_API_DEFAULT_BASE_URL } from '../../constants/misc.js'
 
-const MAP_STORAGE_PATH = '/storage/maps'
+const MAP_STORAGE_PATH = join(relativeProjectPath(DATA_PATH), 'maps')
 
 const ZIM_MIME_TYPES = ['application/x-zim', 'application/x-openzim', 'application/octet-stream']
 const PMTILES_MIME_TYPES = ['application/vnd.pmtiles', 'application/octet-stream']
@@ -24,7 +25,7 @@ export class CollectionUpdateService {
       return {
         updates: [],
         checked_at: new Date().toISOString(),
-        error: 'Monad API is not configured. Set the MONAD_API_URL environment variable.',
+        error: 'MONAD API is not configured. Set the MONAD_API_URL environment variable.',
       }
     }
 
@@ -45,9 +46,13 @@ export class CollectionUpdateService {
     }
 
     try {
-      const response = await axios.post<ResourceUpdateInfo[]>(`${monadAPIURL}/api/v1/resources/check-updates`, requestBody, {
-        timeout: 15000,
-      })
+      const response = await axios.post<ResourceUpdateInfo[]>(
+        `${monadAPIURL}/api/v1/resources/check-updates`,
+        requestBody,
+        {
+          timeout: 15000,
+        }
+      )
 
       logger.info(
         `[CollectionUpdateService] Update check complete: ${response.data.length} update(s) available`
@@ -62,16 +67,16 @@ export class CollectionUpdateService {
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {
         logger.error(
-          `[CollectionUpdateService] Monad API returned ${error.response.status}: ${JSON.stringify(error.response.data)}`
+          `[CollectionUpdateService] MONAD API returned ${error.response.status}: ${JSON.stringify(error.response.data)}`
         )
         return {
           updates: [],
           checked_at: new Date().toISOString(),
-          error: 'Failed to check for content updates. The update service may be temporarily unavailable.',
+          error:
+            'Failed to check for content updates. The update service may be temporarily unavailable.',
         }
       }
-      const message =
-        error instanceof Error ? error.message : 'Unknown error contacting Monad API'
+      const message = error instanceof Error ? error.message : 'Unknown error contacting MONAD API'
       logger.error(`[CollectionUpdateService] Failed to check for updates: ${message}`)
       return {
         updates: [],
@@ -103,8 +108,7 @@ export class CollectionUpdateService {
       url: update.download_url,
       filepath,
       timeout: 30000,
-      allowedMimeTypes:
-        update.resource_type === 'zim' ? ZIM_MIME_TYPES : PMTILES_MIME_TYPES,
+      allowedMimeTypes: update.resource_type === 'zim' ? ZIM_MIME_TYPES : PMTILES_MIME_TYPES,
       forceNew: true,
       filetype: update.resource_type,
       title: update.resource_id,
@@ -127,9 +131,9 @@ export class CollectionUpdateService {
     return { success: true, jobId: result.job.id }
   }
 
-  async applyAllUpdates(
-    updates: ResourceUpdateInfo[]
-  ): Promise<{ results: Array<{ resource_id: string; success: boolean; jobId?: string; error?: string }> }> {
+  async applyAllUpdates(updates: ResourceUpdateInfo[]): Promise<{
+    results: Array<{ resource_id: string; success: boolean; jobId?: string; error?: string }>
+  }> {
     const results = await Promise.all(
       updates.map(async (update) => {
         const result = await this.applyUpdate(update)

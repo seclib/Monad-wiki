@@ -6,8 +6,8 @@
 
 # Script                | MONAD Uninstall Script
 # Version               | 1.0.0
-# Author                | Crosstalk Solutions, LLC
-# Website               | https://crosstalksolutions.com
+# Author                | seclib
+# Website               | https://github.com/seclib/monad
 
 ###################################################################################################################################################################################################
 #                                                                                                                                                                                                 #
@@ -15,7 +15,7 @@
 #                                                                                                                                                                                                 #
 ###################################################################################################################################################################################################
 
-MONAD_DIR="/opt/monad"
+MONAD_DIR="${MONAD_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 MANAGEMENT_COMPOSE_FILE="${MONAD_DIR}/compose.yml"
 
 ###################################################################################################################################################################################################
@@ -86,7 +86,7 @@ check_docker_compose() {
 }
 
 storage_cleanup() {
-  read -p "Do you want to delete the MONAD storage directory (${MONAD_DIR})? This is best if you want to start a completely fresh install. This will PERMANENTLY DELETE all stored Monad data and can't be undone! (y/N): " delete_dir_choice
+  read -p "Do you want to delete the MONAD storage directory (${MONAD_DIR})? This is best if you want to start a completely fresh install. This will PERMANENTLY DELETE all stored MONAD data and can't be undone! (y/N): " delete_dir_choice
   case "$delete_dir_choice" in
       y|Y )
           echo "Removing MONAD files..."
@@ -121,9 +121,7 @@ uninstall_monad() {
     echo "Removing monad_default network if it exists..."
     docker network rm monad_default 2>/dev/null && echo "Network removed." || echo "Network already removed or not found."
 
-    # Remove the shared update volume
-    echo "Removing monad_monad-update-shared volume if it exists..."
-    docker volume rm monad_monad-update-shared 2>/dev/null && echo "Volume removed." || echo "Volume already removed or not found."
+    echo "Project-local update coordination data is stored under cache/update-shared."
 
     # Prompt user for storage cleanup and handle it if so
     storage_cleanup

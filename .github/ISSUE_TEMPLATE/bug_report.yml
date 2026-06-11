@@ -1,5 +1,5 @@
 name: Bug Report
-description: Report a bug or issue with Project N.O.M.A.D.
+description: Report a bug or issue with MONAD
 title: "[Bug]: "
 labels: ["bug", "needs-triage"]
 body:
@@ -7,12 +7,12 @@ body:
     attributes:
       value: |
         Thanks for taking the time to report a bug! Please fill out the information below to help us diagnose and fix the issue.
-        
+
         **Before submitting:**
         - Search existing issues to avoid duplicates
-        - Ensure you're running the latest version of N.O.M.A.D.
+        - Ensure you're running the latest version of MONAD
         - Redact any personal or sensitive information from logs/configs
-        - Please don't submit issues related to running N.O.M.A.D. on Unraid or another NAS - we don't have plans to support these kinds of platforms at this time
+        - Please note whether you are running MONAD on an unsupported platform
 
   - type: dropdown
     id: issue-category
@@ -73,10 +73,10 @@ body:
       required: true
 
   - type: input
-    id: nomad-version
+    id: monad-version
     attributes:
-      label: N.O.M.A.D. Version
-      description: What version of N.O.M.A.D. are you running? (Check Settings > Update or run `docker ps` and check nomad_admin image tag)
+      label: MONAD Version
+      description: What version of MONAD are you running? (Check Settings > Update or run `docker ps` and check the monad_admin image tag)
       placeholder: "e.g., 1.29.0"
     validations:
       required: true
@@ -85,7 +85,7 @@ body:
     id: os
     attributes:
       label: Operating System
-      description: What OS are you running N.O.M.A.D. on?
+      description: What OS are you running MONAD on?
       options:
         - Ubuntu 24.04
         - Ubuntu 22.04
@@ -132,7 +132,7 @@ body:
         CPU: 
         RAM: 
         Available Disk Space: 
-        GPU (if any): 
+        GPU (if any):
 
   - type: textarea
     id: service-status
@@ -148,12 +148,10 @@ body:
       label: Relevant Logs
       description: |
         Include any relevant logs or error messages. **Please redact any personal/sensitive information.**
-        
+
         Useful commands for collecting logs:
-        - N.O.M.A.D. management app: `docker logs nomad_admin`
-        - Ollama: `docker logs nomad_ollama`
-        - Qdrant: `docker logs nomad_qdrant`
-        - Specific service: `docker logs nomad_<service-name>`
+        - MONAD admin app: `docker logs monad_admin`
+        - Specific service: `docker logs monad_<service-name>`
       placeholder: Paste relevant log output here
       render: shell
 
@@ -185,9 +183,9 @@ body:
       options:
         - label: I have searched for existing issues that might be related to this bug
           required: true
-        - label: I am running the latest version of Project N.O.M.A.D. (or have noted my version above)
+        - label: I am running the latest version of MONAD (or have noted my version above)
           required: true
         - label: I have redacted any personal or sensitive information from logs and screenshots
           required: true
-        - label: This issue is NOT related to running N.O.M.A.D. on an unsupported/non-Debian-based OS
+        - label: This issue is NOT related to running MONAD on an unsupported/non-Debian-based OS
           required: false

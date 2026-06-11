@@ -179,7 +179,9 @@ export default function BenchmarkPage(props: {
     onError: (error: any) => {
       // Check if this is a 409 Conflict error (already submitted)
       if (error.status === 409) {
-        setSubmitError('A benchmark for this system with the same or higher score has already been submitted.')
+        setSubmitError(
+          'A benchmark for this system with the same or higher score has already been submitted.'
+        )
       } else {
         setSubmitError(error.message)
       }
@@ -304,13 +306,16 @@ export default function BenchmarkPage(props: {
 
   // Listen for benchmark progress via SSE (backup for async mode)
   useEffect(() => {
-    const unsubscribe = subscribe(BROADCAST_CHANNELS.BENCHMARK_PROGRESS, (data: BenchmarkProgressWithID) => {
-      setProgress(data)
-      if (data.status === 'completed' || data.status === 'error') {
-        setIsRunning(false)
-        refetchLatestRef.current?.()
+    const unsubscribe = subscribe(
+      BROADCAST_CHANNELS.BENCHMARK_PROGRESS,
+      (data: BenchmarkProgressWithID) => {
+        setProgress(data)
+        if (data.status === 'completed' || data.status === 'error') {
+          setIsRunning(false)
+          refetchLatestRef.current?.()
+        }
       }
-    })
+    )
 
     return () => {
       unsubscribe()
@@ -584,12 +589,12 @@ export default function BenchmarkPage(props: {
                           variant="bordered"
                         >
                           <a
-                            href="https://benchmark.projectnomad.us"
+                            href="https://github.com/seclib/monad"
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-sm text-desert-green hover:underline mt-2 inline-block"
                           >
-                            View the leaderboard →
+                            Open MONAD repository →
                           </a>
                         </Alert>
                       )}

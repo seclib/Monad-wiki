@@ -7,6 +7,7 @@ import { DockerService } from '#services/docker_service'
 import { ZimService } from '#services/zim_service'
 import { MapService } from '#services/map_service'
 import { EmbedFileJob } from './embed_file_job.js'
+import logger from '@adonisjs/core/services/logger'
 
 export class RunDownloadJob {
   static get queue() {
@@ -34,7 +35,7 @@ export class RunDownloadJob {
     const queueService = QueueService.getInstance()
     const queue = queueService.getQueue(this.queue)
     const client = await queue.client
-    await client.set(this.cancelKey(jobId), '1', 'EX', 300) // 5 min TTL
+    await client.set(this.cancelKey(jobId), '1', { EX: 300 }) // 5 min TTL
   }
 
   async handle(job: Job) {
@@ -135,9 +136,9 @@ export class RunDownloadJob {
               if (oldFilePath && oldFilePath !== filepath) {
                 try {
                   await deleteFileIfExists(oldFilePath)
-                  console.log(`[RunDownloadJob] Deleted old file: ${oldFilePath}`)
+                  logger.info(`[RunDownloadJob] Deleted old file: ${oldFilePath}`)
                 } catch (deleteError) {
-                  console.warn(
+                  logger.warn(
                     `[RunDownloadJob] Failed to delete old file ${oldFilePath}:`,
                     deleteError
                   )
@@ -175,7 +176,7 @@ export class RunDownloadJob {
                       { file_path: filepath, state: 'pending_decision', chunks_embedded: 0 }
                     )
                   } catch (error) {
-                    console.error(
+                    logger.error(
                       `[RunDownloadJob] Error recording pending_decision state for ${filepath}:`,
                       error
                     )
@@ -187,7 +188,7 @@ export class RunDownloadJob {
                       filePath: filepath,
                     })
                   } catch (error) {
-                    console.error(
+                    logger.error(
                       `[RunDownloadJob] Error dispatching EmbedFileJob for URL ${url}:`,
                       error
                     )
@@ -199,7 +200,7 @@ export class RunDownloadJob {
               await mapsService.downloadRemoteSuccessCallback([url], false)
             }
           } catch (error) {
-            console.error(
+            logger.error(
               `[RunDownloadJob] Error in download success callback for URL ${url}:`,
               error
             )

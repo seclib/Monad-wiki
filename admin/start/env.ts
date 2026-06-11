@@ -20,8 +20,10 @@ export default await Env.create(new URL('../', import.meta.url), {
   LOG_LEVEL: Env.schema.string(),
   INTERNET_STATUS_TEST_URL: Env.schema.string.optional(),
   DISABLE_COMPRESSION: Env.schema.boolean.optional(),
+  MONAD_OFFLINE_MODE: Env.schema.boolean.optional(),
   OLLAMA_BASE_URL: Env.schema.string.optional(),
   VAULT_PATH: Env.schema.string.optional(),
+  MONAD_PROJECT_ROOT: Env.schema.string.optional(),
 
   /*
   |----------------------------------------------------------
@@ -29,6 +31,18 @@ export default await Env.create(new URL('../', import.meta.url), {
   |----------------------------------------------------------
   */
   MONAD_STORAGE_PATH: Env.schema.string.optional(),
+  MONAD_LOGS_PATH: Env.schema.string.optional(),
+  MONAD_CACHE_PATH: Env.schema.string.optional(),
+  MONAD_CONFIG_PATH: Env.schema.string.optional(),
+  MONAD_MODELS_PATH: Env.schema.string.optional(),
+  MONAD_DATA_PATH: Env.schema.string.optional(),
+  MONAD_ENCRYPTION_KEY: Env.schema.string.optional(),
+  MONAD_STORAGE_KEY: Env.schema.string.optional(),
+  MONAD_ENCRYPTION_PASSWORD: Env.schema.string.optional(),
+  MONAD_KEY_PASSWORD: Env.schema.string.optional(),
+  MONAD_DOCKER_HOST: Env.schema.string.optional(),
+  MONAD_DOCKER_SOCKET_PATH: Env.schema.string.optional(),
+  PMTILES_BINARY_PATH: Env.schema.string.optional(),
 
   /*
   |----------------------------------------------------------
@@ -63,4 +77,5 @@ export default await Env.create(new URL('../', import.meta.url), {
   |----------------------------------------------------------
   */
   MONAD_API_URL: Env.schema.string.optional(),
+  MONAD_BENCHMARK_API_URL: Env.schema.string.optional(),
 })

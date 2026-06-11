@@ -13,12 +13,12 @@ If this is your first time using MONAD, the Easy Setup wizard will help you get 
 ![Easy Setup Wizard — Step 1: Choose your capabilities](/docs/easy-setup-step1.webp)
 
 The wizard walks you through four simple steps:
+
 1. **Capabilities** — Choose what to enable: Information Library, AI Assistant, Education Platform, Maps, Data Tools, and Notes
 2. **Maps** — Select geographic regions for offline maps
 3. **Content** — Choose curated content collections with Essential, Standard, or Comprehensive tiers
 
-![Content tiers — Essential, Standard, and Comprehensive](/docs/easy-setup-tiers.webp)
-4. **Review** — Confirm your selections and start downloading
+![Content tiers — Essential, Standard, and Comprehensive](/docs/easy-setup-tiers.webp) 4. **Review** — Confirm your selections and start downloading
 
 Depending on what you selected, downloads may take a while. You can monitor progress in the Settings area, continue using features that are already installed, or leave your server running overnight for large downloads.
 
@@ -31,12 +31,14 @@ Depending on what you selected, downloads may take a while. You can monitor prog
 The Information Library stores compressed versions of websites and references that work without internet.
 
 **What's included:**
+
 - Full Wikipedia (millions of articles)
 - Medical references and first aid guides
 - How-to guides and survival information
 - Classic books from Project Gutenberg
 
 **How to use it:**
+
 1. Click **Information Library** from the Command Center home screen or [Apps](/settings/apps) page
 2. Choose a collection (like Wikipedia)
 3. Search or browse just like the regular website
@@ -48,12 +50,14 @@ The Information Library stores compressed versions of websites and references th
 The Education Platform provides complete educational courses that work offline.
 
 **What's included:**
+
 - Khan Academy video courses
 - Math, science, reading, and more
 - Progress tracking for learners
 - Works for all ages
 
 **How to use it:**
+
 1. Click **Education Platform** from the Command Center home screen or [Apps](/settings/apps) page
 2. Sign in or create a learner account
 3. Browse courses and start learning
@@ -69,6 +73,7 @@ The Education Platform provides complete educational courses that work offline.
 MONAD includes a built-in AI chat interface powered by Ollama. It runs entirely on your server — no internet needed, no data sent anywhere.
 
 **What can it do:**
+
 - Answer questions on any topic
 - Explain complex concepts simply
 - Help with writing and editing
@@ -76,6 +81,7 @@ MONAD includes a built-in AI chat interface powered by Ollama. It runs entirely 
 - Brainstorm ideas and assist with problem-solving
 
 **How to use it:**
+
 1. Click **AI Chat** from the Command Center or go to [Chat](/chat)
 2. Type your question or request
 3. The AI responds in conversational style
@@ -95,10 +101,12 @@ MONAD includes a built-in AI chat interface powered by Ollama. It runs entirely 
 The Knowledge Base lets you upload documents so the AI can reference them when answering your questions. It uses semantic search (RAG via Qdrant) to find relevant information from your uploaded files.
 
 **Supported file types:**
+
 - PDFs, text files, and other document formats
 - MONAD documentation is automatically loaded when the AI Assistant is installed
 
 **How to use it:**
+
 1. Go to **[Knowledge Base →](/knowledge-base)**
 2. Upload your documents (PDFs, text files, etc.)
 3. Documents are processed and indexed automatically
@@ -106,6 +114,7 @@ The Knowledge Base lets you upload documents so the AI can reference them when a
 5. Remove documents you no longer need — they'll be deleted from the index and local storage
 
 **Use cases:**
+
 - Upload emergency plans for quick reference during a crisis
 - Load technical manuals and SOPs for offline work sites
 - Add curriculum guides for homeschooling
@@ -120,11 +129,13 @@ The Knowledge Base lets you upload documents so the AI can reference them when a
 View maps without internet. Download the regions you need before going offline.
 
 **How to use it:**
+
 1. Click **Maps** from the Command Center
 2. Navigate by dragging and zooming
 3. Search for locations using the search bar
 
 **To add more map regions:**
+
 1. Go to **Settings → Maps Manager**
 2. Select the regions you need
 3. Click Download
@@ -153,6 +164,7 @@ As your needs change, you can add more content anytime:
 MONAD includes a dedicated Wikipedia content management tool for browsing and downloading Wikipedia packages.
 
 **How to use it:**
+
 1. Go to **[Content Explorer →](/settings/zim/remote-explorer)**
 2. Browse available Wikipedia packages by language and size
 3. Select and download the packages you want
@@ -166,11 +178,12 @@ MONAD includes a dedicated Wikipedia content management tool for browsing and do
 Test your hardware performance and see how your MONAD build stacks up against the community.
 
 **How to use it:**
+
 1. Go to **[System Benchmark →](/settings/benchmark)**
 2. Choose a benchmark type: Full, System Only, or AI Only
 3. View your MONAD Score (a weighted composite of CPU, memory, disk, and AI performance)
 4. Create a Builder Tag (your MONAD-themed identity, like "Tactical-Llama-1234")
-5. Share your results with the [community leaderboard](https://benchmark.projectnomad.us)
+5. Review your results locally and compare future runs after hardware or configuration changes
 
 **Note:** Only Full Benchmarks with AI data can be shared to the community leaderboard.
 
@@ -207,6 +220,7 @@ Check on your server anytime:
 ### Storage Management
 
 Your server has limited storage. Prioritize:
+
 - Content you'll actually use
 - Critical references (medical, survival)
 - Maps for your region

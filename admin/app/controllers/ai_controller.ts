@@ -1,3 +1,4 @@
+import { AiOrchestratorService } from '#services/ai_orchestrator_service'
 import { OllamaService } from '#services/ollama_service'
 import { VaultService } from '#services/vault_service'
 import { aiQueryValidator } from '#validators/vault'
@@ -9,20 +10,24 @@ export default class AiController {
   constructor(private ollamaService: OllamaService) {}
 
   private vaultService = new VaultService()
+  private aiOrchestrator = new AiOrchestratorService()
 
   async query({ request, response }: HttpContext) {
     const payload = await request.validateUsing(aiQueryValidator)
-    const messages: Array<{ role: 'system' | 'user'; content: string }> = []
-
-    if (payload.system) {
-      messages.push({ role: 'system', content: payload.system })
-    }
-    messages.push({ role: 'user', content: payload.prompt })
 
     try {
-      const completion = await this.ollamaService.chat({
+      const orchestration = await this.aiOrchestrator.route({
+        prompt: payload.prompt,
+        system: payload.system,
         model: payload.model,
-        messages,
+        mode: payload.mode,
+        disableMemory: payload.disableMemory,
+        forceTool: payload.forceTool,
+      })
+
+      const completion = await this.ollamaService.chat({
+        model: orchestration.selectedModel,
+        messages: [{ role: 'user', content: orchestration.context }],
         stream: false,
       })
 
@@ -32,13 +37,34 @@ export default class AiController {
             title: payload.title || payload.prompt.slice(0, 80),
             prompt: payload.prompt,
             response: content,
-            model: payload.model,
+            model: orchestration.selectedModel,
             tags: payload.tags ?? [],
           })
         : null
 
       return {
         model: completion.model,
+        selectedModel: orchestration.selectedModel,
+        orchestration: {
+          mode: orchestration.mode,
+          primaryCategory: orchestration.primaryCategory,
+          categories: orchestration.categories,
+          modelReason: orchestration.modelReason,
+          memory: {
+            enabled: orchestration.memory.enabled,
+            used: orchestration.memory.used,
+            mode: orchestration.memory.mode,
+            sources: orchestration.memory.sources.map((source) => ({
+              title: source.title,
+              relativePath: source.relativePath,
+              folder: source.folder,
+              tags: source.tags,
+              score: source.score,
+            })),
+            message: orchestration.memory.message,
+          },
+          tool: orchestration.tool,
+        },
         response: content,
         vault,
       }

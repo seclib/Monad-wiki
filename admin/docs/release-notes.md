@@ -5,16 +5,19 @@
 ### Features
 
 ### Bug Fixes
-- fix(logging): also write production logs to stdout for docker visibility (#870). Thanks @chriscrosstalk for the contribution!
-- fix(KB): cursor on Always/Manual ingest policy buttons (#927). Thanks @chriscrosstalk for the contribution!
+
+- fix(logging): also write production logs to stdout for docker visibility (#870). Thanks seclib for the contribution!
+- fix(KB): cursor on Always/Manual ingest policy buttons (#927). Thanks seclib for the contribution!
 
 ### Improvements
-- perf(KB): swap Qdrant full-scroll for facet on source enumeration (#928). Thanks @chriscrosstalk for the contribution!
+
+- perf(KB): swap Qdrant full-scroll for facet on source enumeration (#928). Thanks seclib for the contribution!
 - chore(deps): bump various dependencies. Thanks @jakeaturner for the contribution!
 
 ## Version 1.32.0 - May 20, 2026
 
 ### Features
+
 - **AI:** improved AMD GPU acceleration for Ollama via ROCm + HSA override (#804)
 - **chat:** confirm-on-switch + one-chat-model-at-a-time enforcement (#ffa70a5)
 - **content-manager:** add sortable file size column (#698), closes #685
@@ -37,6 +40,7 @@
 - **maps:** show map coordinates on mouse move (#786) (#08838b1)
 
 ### Bug Fixes
+
 - **AI:** add truncation DEBUG log (#e3b758f)
 - **AI:** improve remote Ollama url validation to prevent SSRF vulnerability (#989a401)
 - **AI:** pre-cap embed input + log fallback reason (#881) (#2dec5bf), closes #369 #670
@@ -86,29 +90,31 @@
 ## Version 1.31.1 - April 21, 2026
 
 ### Features
-- feat(content): custom ZIM library sources with pre-seeded mirrors (#593). Thanks @chriscrosstalk!
-- feat(content-manager): add sortable file size column (#698). Thanks @chriscrosstalk!
-- feat(ai-chat): allow cancelling in-progress model downloads (#701). Thanks @chriscrosstalk!
-- feat(content-updates): show size, surface downloads in Active Downloads (#773). Thanks @chriscrosstalk!
+
+- feat(content): custom ZIM library sources with pre-seeded mirrors (#593). Thanks seclib!
+- feat(content-manager): add sortable file size column (#698). Thanks seclib!
+- feat(ai-chat): allow cancelling in-progress model downloads (#701). Thanks seclib!
+- feat(content-updates): show size, surface downloads in Active Downloads (#773). Thanks seclib!
 - feat(maps): regional map downloads via go-pmtiles extract (#780). Thanks @bgauger!
 - feat(maps): show map coordinates on mouse move (#786). Thanks @kennethbrewer3!
-- feat(AI): re-enable AMD GPU acceleration for Ollama via ROCm + HSA override (#804). Thanks @chriscrosstalk!
-- feat(GPU): auto-remediate monad_ollama passthrough loss on admin boot (#878). Thanks @chriscrosstalk!
-- feat(KB): per-file ingest state machine (Phase 1 of RFC #883) (#888). Thanks @chriscrosstalk!
-- feat(KB): ratio registry for disk + time estimates (Phase 1B of RFC #883) (#891). Thanks @chriscrosstalk!
-- feat(KB): group admin docs into single row in Stored Files (§9) (#892). Thanks @chriscrosstalk!
-- feat(KB): status pill + last-activity on Processing Queue (§5/§10) (#893). Thanks @chriscrosstalk!
-- feat(KB): Always/Manual ingest policy toggle (§1/§4) (#894). Thanks @chriscrosstalk!
-- feat(KB): conditional warnings A + B on Stored Files (§6) (#895). Thanks @chriscrosstalk!
-- feat(KB): surface embedding-disk estimate in curated tier-change modal (§1) (#897). Thanks @chriscrosstalk!
-- feat(KB): first-chat JIT prompt for ingest policy (Phase 3 task 12) (#899). Thanks @chriscrosstalk!
-- feat(KB): wizard AI policy step (Phase 3 task 13) (#900). Thanks @chriscrosstalk!
-- feat(KB): guardrail modal at 50GB / 10%-free thresholds (§7) (#901). Thanks @chriscrosstalk!
-- feat(easy-setup): split AI into its own conditional step (#908). Thanks @chriscrosstalk!
-- feat(KB): per-file ingest action + state indicator on Stored Files (§5) (#909). Thanks @chriscrosstalk!
-- feat(chat): confirm-on-switch + one-chat-model-at-a-time enforcement (#916). Thanks @chriscrosstalk!
+- feat(AI): re-enable AMD GPU acceleration for Ollama via ROCm + HSA override (#804). Thanks seclib!
+- feat(GPU): auto-remediate monad_ollama passthrough loss on admin boot (#878). Thanks seclib!
+- feat(KB): per-file ingest state machine (Phase 1 of RFC #883) (#888). Thanks seclib!
+- feat(KB): ratio registry for disk + time estimates (Phase 1B of RFC #883) (#891). Thanks seclib!
+- feat(KB): group admin docs into single row in Stored Files (§9) (#892). Thanks seclib!
+- feat(KB): status pill + last-activity on Processing Queue (§5/§10) (#893). Thanks seclib!
+- feat(KB): Always/Manual ingest policy toggle (§1/§4) (#894). Thanks seclib!
+- feat(KB): conditional warnings A + B on Stored Files (§6) (#895). Thanks seclib!
+- feat(KB): surface embedding-disk estimate in curated tier-change modal (§1) (#897). Thanks seclib!
+- feat(KB): first-chat JIT prompt for ingest policy (Phase 3 task 12) (#899). Thanks seclib!
+- feat(KB): wizard AI policy step (Phase 3 task 13) (#900). Thanks seclib!
+- feat(KB): guardrail modal at 50GB / 10%-free thresholds (§7) (#901). Thanks seclib!
+- feat(easy-setup): split AI into its own conditional step (#908). Thanks seclib!
+- feat(KB): per-file ingest action + state indicator on Stored Files (§5) (#909). Thanks seclib!
+- feat(chat): confirm-on-switch + one-chat-model-at-a-time enforcement (#916). Thanks seclib!
 
 ### Bug Fixes
+
 - fix(downloads): stage downloads to .tmp to prevent Kiwix loading partial files (#448). Thanks @artbird309!
 - fix(security): close remaining security audit items 3 & 4 (CWE-918, CWE-209) (#552). Thanks @LuisMIguelFurlanettoSousa!
 - fix(ai-chat): add null check to model name (#645). Thanks @hestela!
@@ -118,50 +124,51 @@
 - fix(admin): only hide global map banner after download (#702). Thanks @Gujiassh!
 - fix(maps): wire delete confirmation to API (#732). Thanks @cuyua9!
 - fix: prevent ZIM corrupt file crash and deduplicate Ollama download logs (#741). Thanks @jakeaturner!
-- fix(ai): stop local monad_ollama when remote Ollama is configured (#744). Thanks @chriscrosstalk!
-- fix(rag): repair ZIM embedding pipeline (sync filter, batch gate, DOM walk) (#745). Thanks @chriscrosstalk!
-- fix(zim): accumulate across Kiwix pages to prevent empty Content Explorer (#746). Thanks @chriscrosstalk!
-- fix(qdrant): disable anonymous telemetry by default (#747). Thanks @chriscrosstalk!
+- fix(ai): stop local monad_ollama when remote Ollama is configured (#744). Thanks seclib!
+- fix(rag): repair ZIM embedding pipeline (sync filter, batch gate, DOM walk) (#745). Thanks seclib!
+- fix(zim): accumulate across Kiwix pages to prevent empty Content Explorer (#746). Thanks seclib!
+- fix(qdrant): disable anonymous telemetry by default (#747). Thanks seclib!
 - fix(disk-display): gate NAS Storage label on network filesystem type (#749). Thanks @bgauger!
-- fix(docker): write /app/version.json from VERSION build-arg (#754). Thanks @chriscrosstalk!
-- fix(rag): pass num_ctx and truncate to Ollama embed call (#763). Thanks @chriscrosstalk!
+- fix(docker): write /app/version.json from VERSION build-arg (#754). Thanks seclib!
+- fix(rag): pass num_ctx and truncate to Ollama embed call (#763). Thanks seclib!
 - fix(api): accept notes, marker_type, and position on markers endpoints (#770). Thanks @jrsphoto!
-- fix(install): warn loudly on non-x86_64 architectures before pulling images (#797). Thanks @chriscrosstalk!
-- fix(stream): skip compression for Server-Sent Events (#798). Thanks @chriscrosstalk!
-- fix(maps): Country Picker UX polish + auto-refresh stored files (#817). Thanks @chriscrosstalk!
+- fix(install): warn loudly on non-x86_64 architectures before pulling images (#797). Thanks seclib!
+- fix(stream): skip compression for Server-Sent Events (#798). Thanks seclib!
+- fix(maps): Country Picker UX polish + auto-refresh stored files (#817). Thanks seclib!
 - fix(System): self-heal stale updateAvailable flag after sidecar-driven update (#825). Thanks @jakeaturner!
-- fix(settings/update): four UI/UX fixes for the System Update page (#827). Thanks @chriscrosstalk!
+- fix(settings/update): four UI/UX fixes for the System Update page (#827). Thanks seclib!
 - fix(Maps): send filename instead of full path to delete endpoint (#829). Thanks @bgauger!
-- fix(Maps): render notes in marker popup when populated (#830). Thanks @chriscrosstalk!
-- fix(AI): vendor-aware AMD HSA override + benchmark discrete-GPU detection (#832). Thanks @chriscrosstalk!
+- fix(Maps): render notes in marker popup when populated (#830). Thanks seclib!
+- fix(AI): vendor-aware AMD HSA override + benchmark discrete-GPU detection (#832). Thanks seclib!
 - fix(System): correct NVIDIA VRAM in Graphics card (#850). Thanks @bgauger!
 - fix(Downloads): treat missing Content-Type as octet-stream (#859). Thanks @bgauger!
-- fix(AI): preserve semver tag in DB on AMD Ollama updates (#868). Thanks @chriscrosstalk!
-- fix(AI): rewrite RAG query on first chat follow-up (#869). Thanks @chriscrosstalk!
-- fix(RAG): unbreak multi-batch ZIM ingestion (jobId dedupe) (#872). Thanks @chriscrosstalk!
-- fix(RAG): pace continuation batches when embedding is CPU-only (#873). Thanks @chriscrosstalk!
-- fix(queue): singleton QueueService to stop ioredis connection leak (#877). Thanks @chriscrosstalk!
-- fix(System): correct AMD VRAM in Graphics card + harden log probe (#879). Thanks @chriscrosstalk!
-- fix(RAG): report ZIM ingestion progress in overall-file frame (#880). Thanks @chriscrosstalk!
+- fix(AI): preserve semver tag in DB on AMD Ollama updates (#868). Thanks seclib!
+- fix(AI): rewrite RAG query on first chat follow-up (#869). Thanks seclib!
+- fix(RAG): unbreak multi-batch ZIM ingestion (jobId dedupe) (#872). Thanks seclib!
+- fix(RAG): pace continuation batches when embedding is CPU-only (#873). Thanks seclib!
+- fix(queue): singleton QueueService to stop ioredis connection leak (#877). Thanks seclib!
+- fix(System): correct AMD VRAM in Graphics card + harden log probe (#879). Thanks seclib!
+- fix(RAG): report ZIM ingestion progress in overall-file frame (#880). Thanks seclib!
 - fix(KB): add re-embed and reset & rebuild options to fix broken embeddings (#886). Thanks @jakeaturner!
-- fix(ZIM): preserve co-existing Wikipedia corpora on cleanup (#887). Thanks @chriscrosstalk!
-- fix(RAG): anchor continuation-batch initial progress to overall-file frame (#889). Thanks @chriscrosstalk!
-- fix(AI): pre-cap embed input + log fallback reason (#890). Thanks @chriscrosstalk!
-- fix(KB): remove redundant Refresh button from Processing Queue (#896). Thanks @chriscrosstalk!
-- fix(KB): union Stored Files list with state-machine file paths (#898). Thanks @chriscrosstalk!
-- fix(KB): blank-screen on panel open + tooltips on bulk-action buttons (#907). Thanks @chriscrosstalk!
-- fix(KB): TierSelectionModal hook order + register IconLibrary (#917). Thanks @chriscrosstalk!
-- fix(content): show selected tier on cards while downloads are in flight (#918). Thanks @chriscrosstalk!
-- fix(KB): respect Manual ingest policy on post-download dispatch (#919). Thanks @chriscrosstalk!
+- fix(ZIM): preserve co-existing Wikipedia corpora on cleanup (#887). Thanks seclib!
+- fix(RAG): anchor continuation-batch initial progress to overall-file frame (#889). Thanks seclib!
+- fix(AI): pre-cap embed input + log fallback reason (#890). Thanks seclib!
+- fix(KB): remove redundant Refresh button from Processing Queue (#896). Thanks seclib!
+- fix(KB): union Stored Files list with state-machine file paths (#898). Thanks seclib!
+- fix(KB): blank-screen on panel open + tooltips on bulk-action buttons (#907). Thanks seclib!
+- fix(KB): TierSelectionModal hook order + register IconLibrary (#917). Thanks seclib!
+- fix(content): show selected tier on cards while downloads are in flight (#918). Thanks seclib!
+- fix(KB): respect Manual ingest policy on post-download dispatch (#919). Thanks seclib!
 - fix(AI): improve remote Ollama url validation to prevent SSRF vuln (#920). Thanks @jakeaturner!
 - fix(models): correct inverted belongsTo keys on ChatMessage.session (#921). Thanks @jakeaturner!
 
 ### Improvements
-- docs: add Community Add-Ons page with field manuals + W3Schools packs (#753). Thanks @chriscrosstalk!
+
+- docs: add Community Add-Ons page with field manuals + W3Schools packs (#753). Thanks seclib!
 - docs: add map marker API reference (#783). Thanks @kennethbrewer3!
-- docs: require linked issue for non-trivial PRs (#799). Thanks @chriscrosstalk!
+- docs: require linked issue for non-trivial PRs (#799). Thanks seclib!
 - docs(map): updated notes on the map pin api (#803). Thanks @kennethbrewer3!
-- docs: link to new WSL2 install guide from README and FAQ (#811). Thanks @chriscrosstalk!
+- docs: link to new WSL2 install guide from README and FAQ (#811). Thanks seclib!
 - build(deps): bump picomatch in /admin (#544). Thanks @dependabot[bot]!
 - build(deps): bump lodash from 4.17.23 to 4.18.1 in /admin (#643). Thanks @dependabot[bot]!
 - build(deps-dev): bump vite from 6.4.1 to 6.4.2 in /admin (#677). Thanks @dependabot[bot]!
@@ -176,51 +183,55 @@
 ### Features
 
 ### Bug Fixes
-- **AI Assistant**: In-progress model downloads can now be cancelled properly and the progress UI now matches that of file downloads. Thanks @chriscrosstalk for the contribution!
+
+- **AI Assistant**: In-progress model downloads can now be cancelled properly and the progress UI now matches that of file downloads. Thanks seclib for the contribution!
 - **AI Assistant**: Fixed an issue where the AI Assistant settings page could crash if a model object did not have a details property. Thanks @hestela for the fix!
-- **AI Assistant**: Fixed an issue with non-embeddable files being queued for embedding and flooding logs with errors. Thanks @sbruschke for the bug report and @chriscrosstalk for the fix!
-- **AI Assistant**: Fixed an issue with ZIM batch embedding using the wrong batch count and causing remaining batches to be skipped. Thanks @sbruschke for the bug report and @chriscrosstalk for the fix!
-- **AI Assistant**: Fixed an issue with ZIM content extraction only extracting the first-level children of the article body and thus missing a lot of content. Thanks @sbruschke for the bug report and @chriscrosstalk for the fix!
+- **AI Assistant**: Fixed an issue with non-embeddable files being queued for embedding and flooding logs with errors. Thanks @sbruschke for the bug report and seclib for the fix!
+- **AI Assistant**: Fixed an issue with ZIM batch embedding using the wrong batch count and causing remaining batches to be skipped. Thanks @sbruschke for the bug report and seclib for the fix!
+- **AI Assistant**: Fixed an issue with ZIM content extraction only extracting the first-level children of the article body and thus missing a lot of content. Thanks @sbruschke for the bug report and seclib for the fix!
 - **Disk Collector**: Improved reporting for NFS mount stats and display in the UI. Thanks @bgauger and @bravosierra99 for the contribution!
 - **Downloads**: Downloads are now staged to .tmp files and atomically renamed upon completion to prevent issues with incomplete/corrupt files. Thanks @artbird309 for the contribution!
 - **Downloads**: Removed a duplicate error listener and improved stability when handling Range requests for file downloads. Thanks @jakeaturner for the contribution!
 - **Downloads**: Added improved handling for corrupt ZIM file downloads and removed duplicate Ollama download logs. Thanks @aegisman for the contribution!
 - **Security**: Closed a potential SSRF vulnerability in the map file download functionality by implementing stricter URL validation and blocking private IP ranges. Thanks @LuisMIguelFurlanettoSousa for the fix!
 - **Security**: Sanitized error messages from the backend to prevent potential information disclosure. Thanks @LuisMIguelFurlanettoSousa for the fix!
-- **UI**: Fixed an issue with broken pagination for the Content Explorer that could cause some users to see a "No records found" message indefinitely. Thanks @johno10661 for the bug report and @chriscrosstalk for the fix!
+- **UI**: Fixed an issue with broken pagination for the Content Explorer that could cause some users to see a "No records found" message indefinitely. Thanks @johno10661 for the bug report and seclib for the fix!
 - **UI**: Fixed an issue where all storage devices could report as "NAS Storage" regardless of actual type. Thanks @bgauger for the fix!
 
 ### Improvements
+
 - **AI Assistant**: Now uses the currently loaded model for query rewriting and chat title generation for improved performance and consistency. Thanks @hestela for the contribution!
-- **AI Assistant**: When a remote Ollama URL is configured, the Command Center will now attempt to stop MONAD's local Ollama container to free up resources and avoid confusion. Thanks @chriscrosstalk for the contribution!
+- **AI Assistant**: When a remote Ollama URL is configured, the Command Center will now attempt to stop MONAD's local Ollama container to free up resources and avoid confusion. Thanks seclib for the contribution!
 - **Dependencies**: Updated various dependencies to close security vulnerabilities and improve stability
-- **Docs**: Added a "Community Add-Ons" page to the documentation to highlight some of the amazing community contributions that have been made since launch. Thanks @chriscrosstalk for the contribution!
-- **Privacy**: Added the appropriate environment variable to disable telemetry for the Qdrant container. Note that this will only take effect on new installations of if the Qdrant container is force re-installed on existing installations. Thanks @berkdamerc for the find and @chriscrosstalk for the contribution!
+- **Docs**: Added a "Community Add-Ons" page to the documentation to highlight some of the amazing community contributions that have been made since launch. Thanks seclib for the contribution!
+- **Privacy**: Added the appropriate environment variable to disable telemetry for the Qdrant container. Note that this will only take effect on new installations of if the Qdrant container is force re-installed on existing installations. Thanks @berkdamerc for the find and seclib for the contribution!
 
 ## Version 1.31.0 - April 3, 2026
 
 ### Features
+
 - **AI Assistant**: Added support for remote OpenAI-compatible hosts (e.g. Ollama, LM Studio, etc.) to support running models on seperate hardware from the Command Center host. Thanks @hestela for the contribution!
 - **AI Assistant**: Disabled Ollama Cloud support (not compatible with MONAD's architecture) and added support for flash_attn to improve performance of compatible models. Thanks @hestela for the contribution!
 - **Information Library (Kiwix)**: The Kiwix container now uses an XML library file approach instead of a glob-based approach to inform the Kiwix container of available ZIM files. This allows for much more robust handling of ZIM files and avoids issues with the container failing to start due to incomplete/corrupt ZIM files being present in the storage directory. Thanks @jakeaturner for the contribution!
 - **RAG**: Added support for EPUB file embedding into the Knowledge Base. Thanks @arn6694 for the contribution!
 - **RAG**: Added support for multiple file uploads (<=5, 100mb each) to the Knowledge Base. Thanks @jakeaturner for the contribution!
-- **Maps**: Added support for customizable location markers on the map with database persistence. Thanks @chriscrosstalk for the contribution!
+- **Maps**: Added support for customizable location markers on the map with database persistence. Thanks seclib for the contribution!
 - **Maps**: The global map file can now be downloaded directly from PMTiles for users who want to the full map and/or regions outside of the U.S. that haven't been added to the curated collections yet. Thanks @bgauger for the contribution!
-- **Maps**: Added a scale bar to the map viewer with imperial and metric options. Thanks @chriscrosstalk for the contribution!
-- **Downloads**: Added support/improvements for rich progress, friendly names, cancellation, and live status updates for active downloads in the UI. Thanks @chriscrosstalk for the contribution!
+- **Maps**: Added a scale bar to the map viewer with imperial and metric options. Thanks seclib for the contribution!
+- **Downloads**: Added support/improvements for rich progress, friendly names, cancellation, and live status updates for active downloads in the UI. Thanks seclib for the contribution!
 - **UI**: Converted all PNGs to WEBP for reduced image sizes and improved performance. Thanks @hestela for the contribution!
-- **UI**: Added an Installed Models section to AI Assistant settings. Thanks @chriscrosstalk for the contribution!
+- **UI**: Added an Installed Models section to AI Assistant settings. Thanks seclib for the contribution!
 
 ### Bug Fixes
+
 - **Maps**: The maps API endpoints now properly check for "X-Forwarded-Proto" to support scenarios where the Command Center is behind a reverse proxy that terminates TLS. Thanks @davidgross for the fix!
 - **Maps**: Fixed an issue where the maps API endpoints could fail with an internal error if a hostname was used to access the Command Center instead of an IP address or localhost. Thanks @jakeaturner for the fix!
 - **Queue**: Increased the BullMQ lockDuration to prevent jobs from being killed prematurely on slower systems. Thanks @bgauger for the contribution!
 - **Queue**: Added better handling for very large downloads and user-initated cancellations. Thanks @bgauger for the contribution!
-- **Install**: The install script now checks for the presence of gpg (required for NVIDIA toolkit install) and automatically attempts to install it if it's missing. Thanks @chriscrosstalk for the fix!
+- **Install**: The install script now checks for the presence of gpg (required for NVIDIA toolkit install) and automatically attempts to install it if it's missing. Thanks seclib for the fix!
 - **Security**: Added key validation to the settings read API endpoint. Thanks @LuisMIguelFurlanettoSousa for the fix!
 - **Security**: Improved URL validation logic for ZIM downloads to prevent SSRF vulnerabilities. Thanks @sebastiondev for the fix!
-- **UI**: Fixed the activity feed height in Easy Setup and added automatic scrolling to the latest message during installation. Thanks @chriscrosstalk for the contribution!
+- **UI**: Fixed the activity feed height in Easy Setup and added automatic scrolling to the latest message during installation. Thanks seclib for the contribution!
 
 ### Improvements
 
@@ -240,46 +251,51 @@
 ### Features
 
 ### Bug Fixes
+
 - **Benchmark**: Fixed an issue where CPU and Disk Write scores could be displayed as 0 if the measured values was less than half of the reference mark. Thanks @bortlesboat for the fix!
 - **Content Manager**: Fixed a missing API client method that was causing ZIM file deletions to fail. Thanks @LuisMIguelFurlanettoSousa for the fix!
 - **Install**: Fixed an issue where the install script could incorrectly report the Docker NVIDIA runtime as missing. Thanks @brenex for the fix!
-- **Support the Project**: Fixed a broken link to Rogue Support. Thanks @chriscrosstalk for the fix!
+- **Support the Project**: Fixed a broken support-page link.
 
 ### Improvements
-- **AI Assistant**: Improved error reporting and handling for model downloads. Thanks @chriscrosstalk for the contribution!
+
+- **AI Assistant**: Improved error reporting and handling for model downloads. Thanks seclib for the contribution!
 - **AI Assistant**: Bumped the default version of Ollama installed to v0.18.1 to take advantage of the latest performance improvements and bug fixes.
 - **Apps**: Improved error reporting and handling for service installation failures. Thanks @trek-e for the contribution!
 - **Collections**: Updated various curated collection links to their latest versions. Thanks @builder555 for the contribution!
 - **Cyberchef**: Bumped the default version of CyberChef installed to v10.22.1 to take advantage of the latest features and bug fixes.
-- **Docs**: Added a link to the step-by-step installation guide and video tutorial. Thanks @chriscrosstalk for the contribution!
+- **Docs**: Added a link to the step-by-step installation guide and video tutorial. Thanks seclib for the contribution!
 - **Install**: Increased the retries limit for the MySQL service in Docker Compose to improve stability during installation on systems with slower performance. Thanks @dx4956 for the contribution!
-- **Install**: Fixed an issue where stale data could cause credentials mismatch in MySQL on reinstall. Thanks @chriscrosstalk for the fix!
+- **Install**: Fixed an issue where stale data could cause credentials mismatch in MySQL on reinstall. Thanks seclib for the fix!
 
 ## Version 1.30.0 - March 20, 2026
 
 ### Features
-- **Night Ops**: Added our most requested feature — a dark mode theme for the Command Center interface! Activate it from the footer and enjoy the sleek new look during your late-night missions. Thanks @chriscrosstalk for the contribution!
-- **Debug Info**: Added a new "Debug Info" modal accessible from the footer that provides detailed system and application information for troubleshooting and support. Thanks @chriscrosstalk for the contribution!
+
+- **Night Ops**: Added our most requested feature — a dark mode theme for the Command Center interface! Activate it from the footer and enjoy the sleek new look during your late-night missions. Thanks seclib for the contribution!
+- **Debug Info**: Added a new "Debug Info" modal accessible from the footer that provides detailed system and application information for troubleshooting and support. Thanks seclib for the contribution!
 - **Support the Project**: Added a new "Support the Project" page in settings with links to community resources, donation options, and ways to contribute.
-- **Install**: The main Monad image is now fully self-contained and directly usable with Docker Compose, allowing for more flexible and customizable installations without relying on external scripts. The image remains fully backwards compatible with existing installations, and the install script has been updated to reflect the simpler deployment process.
+- **Install**: The main MONAD image is now fully self-contained and directly usable with Docker Compose, allowing for more flexible and customizable installations without relying on external scripts. The image remains fully backwards compatible with existing installations, and the install script has been updated to reflect the simpler deployment process.
 
 ### Bug Fixes
+
 - **Settings**: Storage usage display now prefers real block devices over tempfs. Thanks @Bortlesboat for the fix!
 - **Settings**: Fixed an issue where device matching and mount entry deduplication logic could cause incorrect storage usage reporting and missing devices in storage displays.
 - **Maps**: The Maps page now respects the request protocol (http vs https) to ensure map tiles load correctly. Thanks @davidgross for the bug report!
 - **Knowledge Base**: Fixed an issue where file embedding jobs could cause a retry storm if the Ollama service was unavailable. Thanks @skyam25 for the bug report!
 - **Curated Collections**: Fixed some broken links in the curated collections definitions (maps and ZIM files) that were causing some resources to fail to download.
-- **Easy Setup**: Fixed an issue where the "Start Here" badge would persist even after visiting the Easy Setup Wizard for the first time. Thanks @chriscrosstalk for the fix!
+- **Easy Setup**: Fixed an issue where the "Start Here" badge would persist even after visiting the Easy Setup Wizard for the first time. Thanks seclib for the fix!
 - **UI**: Fixed an issue where the loading spinner could look strange in certain use cases.
-- **System Updates**: Fixed an issue where the update banner would persist even after the system was updated successfully. Thanks @chriscrosstalk for the fix!
+- **System Updates**: Fixed an issue where the update banner would persist even after the system was updated successfully. Thanks seclib for the fix!
 - **Performance**: Various small memory leak fixes and performance improvements across the UI to ensure a smoother experience.
 
 ### Improvements
+
 - **Ollama**: Improved GPU detection logic to ensure the latest GPU config is always passed to the Ollama container on update
-- **Ollama**: The detected GPU type is now persisted in the database for more reliable configuration and troubleshooting across updates and restarts. Thanks @chriscrosstalk for the contribution!
-- **Downloads**: Users can now dismiss failed download notifications to reduce clutter in the UI. Thanks @chriscrosstalk for the contribution!
+- **Ollama**: The detected GPU type is now persisted in the database for more reliable configuration and troubleshooting across updates and restarts. Thanks seclib for the contribution!
+- **Downloads**: Users can now dismiss failed download notifications to reduce clutter in the UI. Thanks seclib for the contribution!
 - **Logging**: Changed the default log level to "info" to reduce noise and focus on important messages. Thanks @traxeon for the suggestion!
-- **Logging**: Monad's internal logger now creates it's own log directory on startup if it doesn't already exist to prevent errors on fresh installs where the logs directory hasn't been created yet.
+- **Logging**: MONAD's internal logger now creates it's own log directory on startup if it doesn't already exist to prevent errors on fresh installs where the logs directory hasn't been created yet.
 - **Dozzle**: Dozzle shell access and container actions are now disabled by default. Thanks @traxeon for the recommendation!
 - **MySQL & Redis**: Removed port exposure to host by default for improved security. Ports can still be exposed manually if needed. Thanks @traxeon for the recommendation!
 - **Dependencies**: Various dependency updates to close security vulnerabilities and improve stability
@@ -287,45 +303,52 @@
 - **Utility Scripts**: Added an additional warning to the installation script to inform about potential overwriting of existing customized configurations and the importance of backing up data before running the installation script again.
 - **Documentation**: Updated installation instructions to reflect the new option for manual deployment via Docker Compose without the install script.
 
-
 ## Version 1.29.0 - March 11, 2026
 
 ### Features
+
 - **AI Assistant**: Added improved user guidance for troubleshooting GPU pass-through issues
 - **AI Assistant**: The last used model is now automatically selected when a new chat is started
-- **Settings**: Monad now automatically performs nightly checks for available app updates, and users can select and apply updates from the Apps page in Settings
+- **Settings**: MONAD now automatically performs nightly checks for available app updates, and users can select and apply updates from the Apps page in Settings
 
 ### Bug Fixes
+
 - **Settings**: Fixed an issue where the AI Assistant settings page would be shown in navigation even if the AI Assistant was not installed, thus causing 404 errors when clicked
 - **Security**: Path traversal and SSRF mitigations
 - **AI Assistant**: Fixed an issue that was causing intermittent failures saving chat session titles
 
 ### Improvements
+
 - **AI Assistant**: Extensive performance improvements and improved RAG intelligence/context usage
 
 ## Version 1.28.0 - March 5, 2026
 
 ### Features
+
 - **RAG**: Added support for viewing active embedding jobs in the processing queue and improved job progress tracking with more granular status updates
 - **RAG**: Added support for removing documents from the knowledge base (deletion from Qdrant and local storage)
 
 ### Bug Fixes
+
 - **Install**: Fixed broken url's in install script and updated to prompt for Apache 2.0 license acceptance
 - **Docs**: Updated legal notices to reflect Apache 2.0 license and added Qdrant attribution
 - **Dependencies**: Various minor dependency updates to close security vulnerabilities
 
 ### Improvements
+
 - **License**: Added Apache 2.0 license file to repository for clarity and legal compliance
 
 ## Version 1.27.0 - March 4, 2026
 
 ### Features
+
 - **Settings**: Added pagination support for Ollama model list
 - **Early Access Channel**: Allows users to opt in to receive early access builds with the latest features and improvements before they hit stable releases
 
 ### Bug Fixes
 
 ### Improvements
+
 - **AI Assistant**: Improved chat performance by optimizing query rewriting and response streaming logic
 - **CI/CD**: Updated release workflows to support release candidate versions
 - **KV Store**: Improved type safety in KV store implementation
@@ -333,6 +356,7 @@
 ## Version 1.26.0 - February 19, 2026
 
 ### Features
+
 - **AI Assistant**: Added support for showing reasoning stream for models with thinking capabilities
 - **AI Assistant**: Added support for response streaming for improved UX
 
@@ -340,17 +364,18 @@
 
 ### Improvements
 
-
 ## Version 1.25.2 - February 18, 2026
 
 ### Features
 
 ### Bug Fixes
+
 - **AI Assistant**: Fixed an error from chat suggestions when no Ollama models are installed
 - **AI Assistant**: Improved discrete GPU detection logic
 - **UI**: Legacy links to /docs and /knowledge-base now gracefully redirect to the correct pages instead of showing 404 errors
 
 ### Improvements
+
 - **AI Assistant**: Chat suggestions are now disabled by default to avoid overwhelming smaller hardware setups
 
 ## Version 1.25.1 - February 12, 2026
@@ -358,18 +383,21 @@
 ### Features
 
 ### Bug Fixes
+
 - **Settings**: Fix potential stale cache issue when checking for system updates
 - **Settings**: Improve user guidance during system updates
 
 ### Improvements
 
-
 ## Version 1.25.0 - February 12, 2026
 
 ### Features
+
 - **Collections**: Complete overhaul of collection management with dynamic manifests, database tracking of installed resources, and improved UI for managing ZIM files and map assets
 - **Collections**: Added support for checking if newer versions of installed resources are available based on manifest data
+
 ### Bug Fixes
+
 - **Benchmark**: Improved error handling and status code propagation for better user feedback on submission failures
 - **Benchmark**: Fix a race condition in the sysbench container management that could lead to benchmark test failures
 
@@ -471,7 +499,7 @@
 
 ### ✨ Improvements
 
-- **Ollama**: Fallback list of recommended models if api.projectnomad.us is down
+- **Ollama**: Fallback list of recommended models if the MONAD model catalog is unavailable
 - **Ollama/Qdrant**: Docker images pinned to specific versions for stability
 - **README**: Added website and community links
 - Removed Open WebUI as a separate installable app (replaced by built-in AI Chat)
@@ -644,6 +672,7 @@
 ## Version 1.10.1 - December 5, 2025
 
 ### ✨ Improvements
+
 - **Kiwix**: ZIM storage path improvements
 
 ---
@@ -745,7 +774,7 @@
 
 ### 🚀 New Features
 
-- Uninstall script now removes non-management Monad app containers
+- Uninstall script now removes non-management MONAD app containers
 
 ### ✨ Improvements
 
@@ -765,12 +794,12 @@
 ### ✨ Improvements
 
 - **OpenStreetMap**:
-    - Fixed directory paths and access issues
-    - Improved error handling
-    - Fixed renderer file permissions
-    - Fixed absolute host path issue
+  - Fixed directory paths and access issues
+  - Improved error handling
+  - Fixed renderer file permissions
+  - Fixed absolute host path issue
 - **ZIM Manager**:
-    - Initial ZIM download now hosted in MONAD GitHub repo for better availability
+  - Initial ZIM download now hosted in MONAD GitHub repo for better availability
 
 ---
 
@@ -779,6 +808,7 @@
 ### 🚀 New Features
 
 **OpenStreetMap Installation**
+
 - Added OpenStreetMap to installable applications
 - Automatically downloads and imports US Pacific region during installation.
 - Supports rendered tile caching for enhanced performance.
@@ -824,10 +854,8 @@
 
 ## Support
 
-- **Discord:** [Join the Community](https://discord.com/invite/crosstalksolutions) — Get help, share your builds, and connect with other MONAD users
 - **Bug Reports:** [GitHub Issues](https://github.com/seclib/monad/issues)
-- **Website:** [www.projectnomad.us](https://www.projectnomad.us)
 
 ---
 
-*For the full changelog, see our [GitHub releases](https://github.com/seclib/monad/releases).*
+_For the full changelog, see our [GitHub releases](https://github.com/seclib/monad/releases)._

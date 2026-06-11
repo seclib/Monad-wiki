@@ -4,4 +4,4 @@ updates:
     directory: "/admin"
     schedule:
       interval: "weekly"
-    target-branch: "rc"
+    target-branch: "main"

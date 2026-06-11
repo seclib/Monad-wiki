@@ -1,4 +1,7 @@
 import { defineConfig } from '@adonisjs/core/bodyparser'
+import { randomUUID } from 'node:crypto'
+import { join } from 'node:path'
+import { CACHE_PATH, ensureProjectDirectory } from '../app/utils/paths.js'
 
 const bodyParserConfig = defineConfig({
   /**
@@ -36,12 +39,13 @@ const bodyParserConfig = defineConfig({
   multipart: {
     /**
      * Enabling auto process allows bodyparser middleware to
-     * move all uploaded files inside the tmp folder of your
-     * operating system
+     * move uploaded files into MONAD's project-local cache before
+     * controllers encrypt final copies into storage.
      */
     autoProcess: true,
     convertEmptyStringsToNull: true,
     processManually: [],
+    tmpFileName: () => join(ensureProjectDirectory(join(CACHE_PATH, 'uploads')), randomUUID()),
 
     /**
      * Maximum limit of data to parse including all files

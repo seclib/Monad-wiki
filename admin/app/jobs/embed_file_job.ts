@@ -9,6 +9,7 @@ import { createHash } from 'crypto'
 import logger from '@adonisjs/core/services/logger'
 import fs from 'node:fs/promises'
 import { ZIM_BATCH_SIZE } from '../../constants/zim_extraction.js'
+import { assertProjectWritePath } from '../utils/paths.js'
 
 export interface EmbedFileJobParams {
   filePath: string
@@ -385,7 +386,7 @@ export class EmbedFileJob {
       const filePath = (job.data as EmbedFileJobParams).filePath
       if (filePath && filePath.includes(RagService.UPLOADS_STORAGE_PATH)) {
         try {
-          await fs.unlink(filePath)
+          await fs.unlink(assertProjectWritePath(filePath))
           filesDeleted++
         } catch {
           // File may already be deleted — that's fine

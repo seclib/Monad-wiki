@@ -37,7 +37,7 @@ export class DownloadModelJob {
     const queueService = QueueService.getInstance()
     const queue = queueService.getQueue(this.queue)
     const client = await queue.client
-    await client.set(this.cancelKey(jobId), '1', 'EX', 300) // 5 min TTL
+    await client.set(this.cancelKey(jobId), '1', { EX: 300 }) // 5 min TTL
   }
 
   async handle(job: Job) {
@@ -56,9 +56,7 @@ export class DownloadModelJob {
       throw new Error('Ollama service not ready yet')
     }
 
-    logger.info(
-      `[DownloadModelJob] Ollama service is ready. Initiating download for ${modelName}`
-    )
+    logger.info(`[DownloadModelJob] Ollama service is ready. Initiating download for ${modelName}`)
 
     // Register abort controller for this job — used both by in-process cancels (same process
     // as the API server) and as the target of the Redis poll loop below.
@@ -101,16 +99,18 @@ export class DownloadModelJob {
           }
 
           // Store detailed progress in job data for clients to query
-          job.updateData({
-            ...job.data,
-            status: 'downloading',
-            progress: progressPercent,
-            downloadedBytes: bytes?.downloadedBytes,
-            totalBytes: bytes?.totalBytes,
-            progress_timestamp: new Date().toISOString(),
-          }).catch((err) => {
-            if (err?.code !== -1) throw err
-          })
+          job
+            .updateData({
+              ...job.data,
+              status: 'downloading',
+              progress: progressPercent,
+              downloadedBytes: bytes?.downloadedBytes,
+              totalBytes: bytes?.totalBytes,
+              progress_timestamp: new Date().toISOString(),
+            })
+            .catch((err) => {
+              if (err?.code !== -1) throw err
+            })
         },
         abortController.signal,
         job.id!

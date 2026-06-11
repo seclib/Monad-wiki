@@ -18,14 +18,19 @@ import { getAllFilesystems, getFile } from '../utils/fs.js'
 import axios from 'axios'
 import env from '#start/env'
 import KVStore from '#models/kv_store'
+import { OllamaService } from '#services/ollama_service'
+import { VaultIntelligenceService } from '#services/vault_intelligence_service'
+import { VaultService } from '#services/vault_service'
 import { KV_STORE_SCHEMA, KVStoreKey } from '../../types/kv_store.js'
 import { isNewerVersion } from '../utils/version.js'
+import { CACHE_PATH, CONFIG_PATH, assertProjectReadPath } from '../utils/paths.js'
 import { invalidateAssistantNameCache } from '../../config/inertia.js'
+import { MONAD_API_DEFAULT_BASE_URL } from '../../constants/misc.js'
 
 @inject()
 export class SystemService {
   private static appVersion: string | null = null
-  private static diskInfoFile = '/storage/monad-disk-info.json'
+  private static diskInfoFile = join(CACHE_PATH, 'monad-disk-info.json')
 
   constructor(private dockerService: DockerService) {}
 
@@ -35,6 +40,10 @@ export class SystemService {
   }
 
   async getInternetStatus(): Promise<boolean> {
+    if (env.get('MONAD_OFFLINE_MODE')) {
+      return false
+    }
+
     const DEFAULT_TEST_URL = 'https://1.1.1.1/cdn-cgi/trace'
     const MAX_ATTEMPTS = 3
 
@@ -71,6 +80,82 @@ export class SystemService {
 
     logger.warn('All internet status check attempts failed.')
     return false
+  }
+
+  async getOfflineStatus(): Promise<{
+    offlineMode: boolean
+    readyForOfflineUse: boolean
+    internet: { online: boolean; externalProbeSkipped: boolean }
+    ai: {
+      online: boolean
+      baseUrl: string | null
+      localOnly: boolean
+      gracefulDegradation: boolean
+    }
+    vault: { enabled: boolean; writable: boolean; rootPath: string | null }
+    cache: {
+      vectorIndexPresent: boolean
+      indexedFiles: number
+      indexedChunks: number
+      updatedAt: string | null
+    }
+    strategy: string[]
+  }> {
+    const offlineMode = env.get('MONAD_OFFLINE_MODE') ?? false
+    const ollamaService = new OllamaService()
+    const vaultService = new VaultService()
+    const vaultIntelligenceService = new VaultIntelligenceService()
+
+    const [internetResult, aiResult, vaultResult, indexResult] = await Promise.allSettled([
+      offlineMode ? Promise.resolve(false) : this.getInternetStatus(),
+      ollamaService.health(),
+      vaultService.status(),
+      vaultIntelligenceService.getStatus(),
+    ])
+
+    const internetOnline = internetResult.status === 'fulfilled' ? internetResult.value : false
+    const aiHealth =
+      aiResult.status === 'fulfilled'
+        ? aiResult.value
+        : { online: false, baseUrl: null, native: null }
+    const vault =
+      vaultResult.status === 'fulfilled'
+        ? vaultResult.value
+        : { enabled: false, writable: false, rootPath: null }
+    const index = indexResult.status === 'fulfilled' ? indexResult.value : null
+
+    return {
+      offlineMode,
+      readyForOfflineUse: Boolean(vault.enabled && vault.writable),
+      internet: {
+        online: internetOnline,
+        externalProbeSkipped: offlineMode,
+      },
+      ai: {
+        online: aiHealth.online,
+        baseUrl: aiHealth.baseUrl,
+        localOnly: offlineMode,
+        gracefulDegradation: !aiHealth.online,
+      },
+      vault: {
+        enabled: vault.enabled,
+        writable: vault.writable,
+        rootPath: vault.rootPath,
+      },
+      cache: {
+        vectorIndexPresent: Boolean(index),
+        indexedFiles: index?.indexedFiles ?? 0,
+        indexedChunks: index?.indexedChunks ?? 0,
+        updatedAt: index?.updatedAt ?? null,
+      },
+      strategy: [
+        'Core data is stored in the filesystem vault.',
+        'AI calls use the configured local Ollama-compatible endpoint.',
+        'Vault semantic search uses the local vector cache when available.',
+        'Vault ask falls back to keyword snippets when AI is unavailable.',
+        'External probes are skipped when MONAD_OFFLINE_MODE=true.',
+      ],
+    }
   }
 
   /**
@@ -471,7 +556,7 @@ export class SystemService {
 
           // AMD doesn't register a Docker runtime. Detection sources, in priority order:
           //   1. KV 'gpu.type' (set by DockerService._detectGPUType after first Ollama install)
-          //   2. Marker file at /app/storage/.monad-gpu-type (written by install_monad.sh)
+          //   2. Project-local GPU marker file written by install_monad.sh
           // The marker file matters because the System page should reflect AMD presence
           // even before AI Assistant has been installed for the first time.
           let savedGpuType: string | null | undefined = (await KVStore.getValue('gpu.type')) as
@@ -479,7 +564,9 @@ export class SystemService {
             | undefined
           if (!savedGpuType) {
             try {
-              savedGpuType = (await readFile('/app/storage/.monad-gpu-type', 'utf8')).trim()
+              savedGpuType = (
+                await readFile(assertProjectReadPath(join(CONFIG_PATH, 'monad-gpu-type')), 'utf8')
+              ).trim()
             } catch {}
           }
           const amdEnabledRaw = await KVStore.getValue('ai.amdGpuAcceleration')
@@ -621,6 +708,16 @@ export class SystemService {
       const cachedUpdateAvailable = await KVStore.getValue('system.updateAvailable')
       const cachedLatestVersion = await KVStore.getValue('system.latestVersion')
 
+      if (env.get('MONAD_OFFLINE_MODE')) {
+        return {
+          success: true,
+          updateAvailable: cachedUpdateAvailable ?? false,
+          currentVersion,
+          latestVersion: cachedLatestVersion || '',
+          message: 'Offline mode is enabled. Using cached version metadata.',
+        }
+      }
+
       // Use cached values if not forcing a fresh check.
       // the CheckUpdateJob will update these values every 12 hours
       if (!force) {
@@ -681,9 +778,20 @@ export class SystemService {
   }
 
   async subscribeToReleaseNotes(email: string): Promise<{ success: boolean; message: string }> {
+    if (env.get('MONAD_OFFLINE_MODE')) {
+      return {
+        success: false,
+        message: 'Offline mode is enabled. External release-note subscriptions are disabled.',
+      }
+    }
+
     try {
+      const monadApiBaseUrl = (env.get('MONAD_API_URL') || MONAD_API_DEFAULT_BASE_URL).replace(
+        /\/+$/,
+        ''
+      )
       const response = await axios.post(
-        'https://api.projectnomad.us/api/v1/lists/release-notes/subscribe',
+        `${monadApiBaseUrl}/api/v1/lists/release-notes/subscribe`,
         { email },
         { timeout: 5000 }
       )

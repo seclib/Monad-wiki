@@ -1,7 +1,12 @@
-import env from '#start/env'
 import { DateTime } from 'luxon'
-import { copyFile, mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises'
+import { mkdir, readdir, stat } from 'node:fs/promises'
 import { basename, extname, join, relative, resolve } from 'node:path'
+import { VAULT_ROOT_PATH, assertProjectReadPath, assertProjectWritePath } from '../utils/paths.js'
+import {
+  getEncryptedStorageMetadata,
+  readEncryptedStorageFile,
+  writeEncryptedStorageFile,
+} from '../utils/storage_crypto.js'
 
 export const VAULT_FOLDERS = ['notes', 'docs', 'ai', 'services'] as const
 export type VaultFolder = (typeof VAULT_FOLDERS)[number]
@@ -97,18 +102,22 @@ function parseFrontmatter(markdown: string): { title?: string; tags: string[] } 
 }
 
 export class VaultService {
-  private readonly rootPath = resolve(env.get('VAULT_PATH') || '/vault')
+  private readonly rootPath = assertProjectWritePath(resolve(VAULT_ROOT_PATH))
 
   getRootPath() {
     return this.rootPath
   }
 
   async ensureVault() {
-    await mkdir(this.rootPath, { recursive: true })
+    await mkdir(assertProjectWritePath(this.rootPath), { recursive: true })
     await Promise.all(
-      VAULT_FOLDERS.map((folder) => mkdir(join(this.rootPath, folder), { recursive: true }))
+      VAULT_FOLDERS.map((folder) =>
+        mkdir(assertProjectWritePath(join(this.rootPath, folder)), { recursive: true })
+      )
     )
-    await mkdir(join(this.rootPath, 'docs', 'assets'), { recursive: true })
+    await mkdir(assertProjectWritePath(join(this.rootPath, 'docs', 'assets')), {
+      recursive: true,
+    })
   }
 
   async status() {
@@ -130,10 +139,10 @@ export class VaultService {
       ? basename(input.filename, extname(input.filename))
       : input.title
     const filename = `${DateTime.now().toFormat('yyyyLLdd-HHmmss')}-${slugify(requestedName)}.md`
-    const absolutePath = join(folderPath, filename)
+    const absolutePath = assertProjectWritePath(join(folderPath, filename))
     const body = `${frontmatter(input)}${input.content.trim()}\n`
 
-    await writeFile(absolutePath, body, 'utf8')
+    await writeEncryptedStorageFile(absolutePath, body)
 
     return {
       absolutePath,
@@ -168,8 +177,8 @@ export class VaultService {
     await this.ensureVault()
 
     const assetName = `${DateTime.now().toFormat('yyyyLLdd-HHmmss')}-${slugify(input.originalFilename)}${extname(input.originalFilename)}`
-    const assetPath = join(this.rootPath, 'docs', 'assets', assetName)
-    await copyFile(input.sourcePath, assetPath)
+    const assetPath = assertProjectWritePath(join(this.rootPath, 'docs', 'assets', assetName))
+    await writeEncryptedStorageFile(assetPath, await readEncryptedStorageFile(input.sourcePath))
 
     return this.saveMarkdown({
       folder: 'docs',
@@ -196,13 +205,15 @@ export class VaultService {
     const results: VaultSearchResult[] = []
 
     for (const filePath of files) {
-      const markdown = await readFile(filePath, 'utf8')
+      const markdown = (await readEncryptedStorageFile(assertProjectReadPath(filePath))).toString(
+        'utf8'
+      )
       const haystack = markdown.toLowerCase()
       const index = haystack.indexOf(needle)
       if (index === -1) continue
 
       const info = parseFrontmatter(markdown)
-      const stats = await stat(filePath)
+      const stats = await stat(assertProjectReadPath(filePath))
       const relativePath = relative(this.rootPath, filePath)
       const snippetStart = Math.max(0, index - 80)
       const snippet = markdown.slice(snippetStart, index + needle.length + 140).replace(/\s+/g, ' ')
@@ -228,7 +239,13 @@ export class VaultService {
     const files = await this.listMarkdownFiles(root)
     const items = await Promise.all(
       files.map(async (filePath) => {
-        const [markdown, stats] = await Promise.all([readFile(filePath, 'utf8'), stat(filePath)])
+        const safeFilePath = assertProjectReadPath(filePath)
+        const [markdownBuffer, stats] = await Promise.all([
+          readEncryptedStorageFile(safeFilePath),
+          stat(safeFilePath),
+        ])
+        const markdown = markdownBuffer.toString('utf8')
+        const metadata = getEncryptedStorageMetadata(safeFilePath)
         const info = parseFrontmatter(markdown)
         const relativePath = relative(this.rootPath, filePath)
 
@@ -238,29 +255,30 @@ export class VaultService {
           folder: relativePath.split(/[\\/]/)[0] || '',
           tags: info.tags,
           updatedAt: stats.mtime.toISOString(),
-          sizeBytes: stats.size,
+          sizeBytes: metadata.plaintextLength ?? metadata.encryptedLength,
         }
       })
     )
 
     return items
       .sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt))
-      .slice(0, Math.max(1, Math.min(limit, 500)))
+      .slice(0, Math.max(1, Math.min(limit, 5000)))
   }
 
   private resolveFolder(folder: VaultFolder): string {
     if (!VAULT_FOLDERS.includes(folder)) {
       throw new Error(`Invalid vault folder: ${folder}`)
     }
-    return join(this.rootPath, folder)
+    return assertProjectWritePath(join(this.rootPath, folder))
   }
 
   private async listMarkdownFiles(root: string): Promise<string[]> {
-    const entries = await readdir(root, { withFileTypes: true })
+    const safeRoot = assertProjectReadPath(root)
+    const entries = await readdir(safeRoot, { withFileTypes: true })
     const files: string[] = []
 
     for (const entry of entries) {
-      const fullPath = join(root, entry.name)
+      const fullPath = assertProjectReadPath(join(safeRoot, entry.name))
       if (entry.isDirectory()) {
         files.push(...(await this.listMarkdownFiles(fullPath)))
       } else if (entry.isFile() && entry.name.endsWith('.md')) {

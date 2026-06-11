@@ -1,6 +1,8 @@
 FROM alpine:3.20
 RUN apk add --no-cache util-linux bash
-COPY collect-disk-info.sh /usr/local/bin/collect-disk-info.sh
-RUN chmod +x /usr/local/bin/collect-disk-info.sh && mkdir -p /storage
-WORKDIR /storage
-CMD ["/usr/local/bin/collect-disk-info.sh"]
+WORKDIR /app
+COPY collect-disk-info.sh bin/collect-disk-info.sh
+RUN chmod +x bin/collect-disk-info.sh && mkdir -p storage cache
+ENV MONAD_STORAGE_PATH=storage
+ENV MONAD_CACHE_PATH=cache
+CMD ["bin/collect-disk-info.sh"]

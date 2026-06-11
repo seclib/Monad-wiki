@@ -1,19 +1,20 @@
 import Service from '#models/service'
 import { BaseSeeder } from '@adonisjs/lucid/seeders'
 import { ModelAttributes } from '@adonisjs/lucid/types/model'
-import env from '#start/env'
 import { SERVICE_NAMES } from '../../constants/service_names.js'
 import { KIWIX_LIBRARY_CMD } from '../../constants/kiwix.js'
+import { DATA_PATH } from '../../app/utils/paths.js'
 
 export default class ServiceSeeder extends BaseSeeder {
-  // Use environment variable with fallback to production default
-  private static MONAD_STORAGE_ABS_PATH = env.get(
-    'MONAD_STORAGE_PATH',
-    '/opt/monad/storage'
-  )
+  private static MONAD_DATA_ABS_PATH = DATA_PATH
   private static DEFAULT_SERVICES: Omit<
     ModelAttributes<Service>,
-    'created_at' | 'updated_at' | 'metadata' | 'id' | 'available_update_version' | 'update_checked_at'
+    | 'created_at'
+    | 'updated_at'
+    | 'metadata'
+    | 'id'
+    | 'available_update_version'
+    | 'update_checked_at'
   >[] = [
     {
       service_name: SERVICE_NAMES.KIWIX,
@@ -29,7 +30,7 @@ export default class ServiceSeeder extends BaseSeeder {
       container_config: JSON.stringify({
         HostConfig: {
           RestartPolicy: { Name: 'unless-stopped' },
-          Binds: [`${ServiceSeeder.MONAD_STORAGE_ABS_PATH}/zim:/data`],
+          Binds: [`${ServiceSeeder.MONAD_DATA_ABS_PATH}/zim:/data`],
           PortBindings: { '8080/tcp': [{ HostPort: '8090' }] },
         },
         ExposedPorts: { '8080/tcp': {} },
@@ -53,7 +54,7 @@ export default class ServiceSeeder extends BaseSeeder {
       container_config: JSON.stringify({
         HostConfig: {
           RestartPolicy: { Name: 'unless-stopped' },
-          Binds: [`${ServiceSeeder.MONAD_STORAGE_ABS_PATH}/qdrant:/qdrant/storage`],
+          Binds: [`${ServiceSeeder.MONAD_DATA_ABS_PATH}/qdrant:/qdrant/storage`],
           PortBindings: { '6333/tcp': [{ HostPort: '6333' }], '6334/tcp': [{ HostPort: '6334' }] },
         },
         ExposedPorts: { '6333/tcp': {}, '6334/tcp': {} },
@@ -81,7 +82,7 @@ export default class ServiceSeeder extends BaseSeeder {
       container_config: JSON.stringify({
         HostConfig: {
           RestartPolicy: { Name: 'unless-stopped' },
-          Binds: [`${ServiceSeeder.MONAD_STORAGE_ABS_PATH}/ollama:/root/.ollama`],
+          Binds: [`${ServiceSeeder.MONAD_DATA_ABS_PATH}/ollama:/root/.ollama`],
           PortBindings: { '11434/tcp': [{ HostPort: '11434' }] },
         },
         ExposedPorts: { '11434/tcp': {} },
@@ -129,7 +130,7 @@ export default class ServiceSeeder extends BaseSeeder {
         HostConfig: {
           RestartPolicy: { Name: 'unless-stopped' },
           PortBindings: { '8080/tcp': [{ HostPort: '8200' }] },
-          Binds: [`${ServiceSeeder.MONAD_STORAGE_ABS_PATH}/flatnotes:/data`],
+          Binds: [`${ServiceSeeder.MONAD_DATA_ABS_PATH}/flatnotes:/data`],
         },
         ExposedPorts: { '8080/tcp': {} },
         Env: ['FLATNOTES_AUTH_TYPE=none'],
@@ -154,7 +155,7 @@ export default class ServiceSeeder extends BaseSeeder {
         HostConfig: {
           RestartPolicy: { Name: 'unless-stopped' },
           PortBindings: { '8080/tcp': [{ HostPort: '8300' }] },
-          Binds: [`${ServiceSeeder.MONAD_STORAGE_ABS_PATH}/kolibri:/root/.kolibri`],
+          Binds: [`${ServiceSeeder.MONAD_DATA_ABS_PATH}/kolibri:/root/.kolibri`],
         },
         ExposedPorts: { '8080/tcp': {} },
       }),

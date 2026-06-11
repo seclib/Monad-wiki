@@ -8,22 +8,16 @@ import type { StoredFileInfo } from '../../types/rag.js'
  * rolled-up entry for MONAD's bundled docs (rather than the 12+
  * individual markdown files those break into).
  *
- * Bucket assignment is purely by path prefix; matching is done on `/` so the
- * server-emitted absolute paths work regardless of which Linux mount the admin
- * container uses.
+ * Bucket assignment is by portable project-local path prefix.
  */
 export type KbFileBucket = 'zim' | 'upload' | 'admin_docs' | 'other'
 
 const ADMIN_DOCS_PREFIXES = ['/app/docs/', '/app/README.md']
-const ZIM_PREFIX = '/app/storage/zim/'
-const UPLOADS_PREFIX = '/app/storage/kb_uploads/'
+const ZIM_PREFIX = 'data/zim/'
+const UPLOADS_PREFIX = 'storage/kb_uploads/'
 
 export function classifyKbFile(source: string): KbFileBucket {
-  if (
-    ADMIN_DOCS_PREFIXES.some((p) =>
-      p.endsWith('/') ? source.startsWith(p) : source === p
-    )
-  ) {
+  if (ADMIN_DOCS_PREFIXES.some((p) => (p.endsWith('/') ? source.startsWith(p) : source === p))) {
     return 'admin_docs'
   }
   if (source.startsWith(ZIM_PREFIX)) return 'zim'

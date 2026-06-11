@@ -5,14 +5,21 @@ import { inject } from '@adonisjs/core'
 import type { HttpContext } from '@adonisjs/core/http'
 import app from '@adonisjs/core/services/app'
 import { randomBytes } from 'node:crypto'
-import { sanitizeFilename } from '../utils/fs.js'
-import { basename } from 'node:path'
-import { deleteFileSchema, embedFileSchema, estimateBatchSchema, getJobStatusSchema } from '#validators/rag'
+import { deleteFileIfExists, sanitizeFilename } from '../utils/fs.js'
+import { basename, join } from 'node:path'
+import {
+  deleteFileSchema,
+  embedFileSchema,
+  estimateBatchSchema,
+  getJobStatusSchema,
+} from '#validators/rag'
 import logger from '@adonisjs/core/services/logger'
+import { assertProjectReadPath, assertProjectWritePath } from '../utils/paths.js'
+import { encryptFileIntoStorage } from '../utils/storage_crypto.js'
 
 @inject()
 export default class RagController {
-  constructor(private ragService: RagService) { }
+  constructor(private ragService: RagService) {}
 
   public async upload({ request, response }: HttpContext) {
     const uploadedFile = request.file('file')
@@ -24,11 +31,16 @@ export default class RagController {
     const sanitizedName = sanitizeFilename(uploadedFile.clientName)
 
     const fileName = `${sanitizedName}-${randomSuffix}.${uploadedFile.extname || 'txt'}`
-    const fullPath = app.makePath(RagService.UPLOADS_STORAGE_PATH, fileName)
+    const uploadDir = assertProjectWritePath(app.makePath(RagService.UPLOADS_STORAGE_PATH))
+    const fullPath = assertProjectWritePath(join(uploadDir, fileName))
 
-    await uploadedFile.move(app.makePath(RagService.UPLOADS_STORAGE_PATH), {
-      name: fileName,
-    })
+    if (!uploadedFile.tmpPath) {
+      return response.status(500).json({ error: 'Temporary upload file is missing' })
+    }
+
+    const tmpPath = assertProjectReadPath(uploadedFile.tmpPath)
+    await encryptFileIntoStorage(tmpPath, fullPath)
+    await deleteFileIfExists(tmpPath)
 
     // Dispatch background job for embedding
     const result = await EmbedFileJob.dispatch({
@@ -153,7 +165,7 @@ export default class RagController {
   public async estimateBatch({ request, response }: HttpContext) {
     const { files } = await request.validateUsing(estimateBatchSchema)
     // The registry matches on basename prefixes; if a caller passes a full path
-    // (e.g. /app/storage/zim/wikipedia_en_simple_…), strip directories first so
+    // (e.g. data/zim/wikipedia_en_simple_…), strip directories first so
     // patterns like `wikipedia_en_simple_` still match.
     const normalized = files.map((f) => ({
       filename: basename(f.filename),

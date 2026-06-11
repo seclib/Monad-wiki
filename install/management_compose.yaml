@@ -9,23 +9,29 @@
 name: monad
 services:
   admin:
-    image: ghcr.io/crosstalk-solutions/project-nomad:latest
+    image: ghcr.io/seclib/monad:latest
     pull_policy: always
     container_name: monad_admin
     restart: unless-stopped
     extra_hosts:
-      - "host.docker.internal:host-gateway"  # Enables host.docker.internal on Linux
+      - "host.docker.internal:host-gateway" # Enables host.docker.internal on Linux
     ports:
       - "8080:8080"
     volumes:
-      - /opt/monad/storage:/app/storage # If you change the default storage path (/opt/monad/storage), make sure to update the disk-collector config as well!
-      - /var/run/docker.sock:/var/run/docker.sock # Allows the admin service to communicate with the Host's Docker daemon
-      - monad-update-shared:/app/update-shared # Shared volume for update communication
+      - ${MONAD_HOST_STORAGE_PATH:-./storage}:/app/storage # Project-local storage path.
+      - ${MONAD_HOST_LOGS_PATH:-./logs}:/app/logs
+      - ${MONAD_HOST_CACHE_PATH:-./cache}:/app/cache
+      # Runtime MONAD config must not mask /app/config, which contains AdonisJS config.
+      - ${MONAD_HOST_CONFIG_PATH:-./config}:/app/runtime/config
+      - ${MONAD_HOST_MODELS_PATH:-./models}:/app/models
+      - ${MONAD_HOST_DATA_PATH:-./data}:/app/data
     environment:
       - NODE_ENV=production
       # PORT is the port the admin server listens on *inside* the container and should not be changed. If you want to change which port the admin interface is accessible from on the host, you can change the port mapping in the "ports" section (e.g. "9090:8080" to access it on port 9090 from the host)
       - PORT=8080
       - LOG_LEVEL=info
+      - APP_AUTHOR=seclib
+      - PROJECT_NAME=MONAD
       # APP_KEY needs to be at least 16 chars or will fail validation and container won't start!
       - APP_KEY=replaceme
       # # Leave HOST as is so the admin server listens all interfaces within the container - this doesn't affect how you access it from the host, it's just for internal container networking
@@ -45,6 +51,9 @@ services:
       # If you change the Redis port, make sure to update this accordingly
       - REDIS_PORT=6379
       - DISABLE_COMPRESSION=false # Most reverse proxies (Nginx, Caddy, etc.) will skip compression if the response is already compressed so this is usally a win all around, but if this causes issues with your setup you can set it to "true" to disable gzip in the admin server
+      - MONAD_API_URL=https://api.monad.local
+      - MONAD_BENCHMARK_API_URL=https://benchmark.monad.local/api/v1
+      - MONAD_CONFIG_PATH=runtime/config
     depends_on:
       mysql:
         condition: service_healthy
@@ -62,15 +71,14 @@ services:
     restart: unless-stopped
     ports:
       - "9999:8080"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock # Allows Dozzle to read logs from the Host's Docker daemon
     environment:
       - DOZZLE_ENABLE_ACTIONS=false # Disabled — unauthenticated container stop/restart on LAN
-      - DOZZLE_ENABLE_SHELL=false  # Disabled — shell access + Docker socket = privilege escalation
+      - DOZZLE_ENABLE_SHELL=false # Disabled — shell access + Docker socket = privilege escalation
   mysql:
     image: mysql:8.0
     container_name: monad_mysql
     restart: unless-stopped
+    command: ["--datadir=/data/mysql"]
     environment:
       - MYSQL_ROOT_PASSWORD=replaceme
       - MYSQL_DATABASE=monad
@@ -78,7 +86,7 @@ services:
       # Needs to match DB_PASSWORD in the admin service!
       - MYSQL_PASSWORD=replaceme
     volumes:
-      - /opt/monad/mysql:/var/lib/mysql # Persist MySQL data on the host. This path can be changed if needed, just make sure it's writable by the container. Host persistence is important for the database to ensure your data isn't lost when the container is removed or updated.
+      - ${MONAD_HOST_MYSQL_DATA_PATH:-./data/mysql}:/data/mysql # Persist MySQL data inside the project folder.
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 30s
@@ -89,7 +97,7 @@ services:
     container_name: monad_redis
     restart: unless-stopped
     volumes:
-      - /opt/monad/redis:/data # Persist Redis data on the host. This path can be changed if needed, just make sure it's writable by the container. Host persistence is important for Redis to ensure your data isn't lost when the container is removed or updated.
+      - ${MONAD_HOST_REDIS_DATA_PATH:-./data/redis}:/data # Persist Redis data inside the project folder.
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 30s
@@ -97,25 +105,22 @@ services:
       retries: 3
   updater:
     # Updater is a lightweight sidecar container that allows the admin container to be updated from within it's own UI
-    image: ghcr.io/crosstalk-solutions/project-nomad-sidecar-updater:latest
+    image: ghcr.io/seclib/monad-sidecar-updater:latest
     pull_policy: always
     container_name: monad_updater
     restart: unless-stopped
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock # Allows communication with the Host's Docker daemon
-      - /opt/monad:/opt/monad # Writable access required so the updater can set the correct image tag in compose.yml. This needs to be the same location that the compose file is located at on the host for the updater to work correctly
-      - monad-update-shared:/shared # Shared volume for communication with admin container
+      - ./:/workspace/shared/monad-project # Writable project checkout for update coordination.
+      - ${MONAD_HOST_UPDATE_SHARED_PATH:-./cache/update-shared}:/workspace/shared # Project-local communication with admin container
   disk-collector:
-    # Disk Collector is a lightweight privileged container that collects disk usage information from the host system and shares it with the admin container so it can be displayed in the UI. 
-    # It requires read-only access to the host filesystem and is designed to be as secure and limited in scope as possible while still providing the necessary functionality.
-    image: ghcr.io/crosstalk-solutions/project-nomad-disk-collector:latest
+    # Disk Collector writes project-local disk metadata for the admin UI.
+    image: ghcr.io/seclib/monad-disk-collector:latest
     pull_policy: always
     container_name: monad_disk_collector
     restart: unless-stopped
     volumes:
-      - /:/host:ro,rslave  # Read-only view of host FS with rslave propagation so /sys and /proc submounts are visible
-      - /opt/monad/storage:/storage
-
-volumes:
-  monad-update-shared:
-    driver: local
+      - ${MONAD_HOST_STORAGE_PATH:-./storage}:/storage:ro
+      - ${MONAD_HOST_CACHE_PATH:-./cache}:/cache
+    environment:
+      MONAD_STORAGE_PATH: /storage
+      MONAD_CACHE_PATH: /cache

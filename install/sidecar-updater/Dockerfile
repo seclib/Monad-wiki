@@ -4,12 +4,13 @@ FROM alpine:3.20
 RUN apk add --no-cache docker-cli docker-cli-compose bash jq
 
 # Copy the update watcher script
-COPY update-watcher.sh /usr/local/bin/update-watcher.sh
-RUN chmod +x /usr/local/bin/update-watcher.sh
+WORKDIR /workspace
+COPY update-watcher.sh bin/update-watcher.sh
+RUN chmod +x bin/update-watcher.sh
 
 # Create shared communication directory
-RUN mkdir -p /shared
+RUN mkdir -p shared
 
-WORKDIR /shared
+WORKDIR /workspace/shared
 
-CMD ["/usr/local/bin/update-watcher.sh"]
+CMD ["../bin/update-watcher.sh"]

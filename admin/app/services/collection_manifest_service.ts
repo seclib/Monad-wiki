@@ -7,13 +7,18 @@ import CollectionManifest from '#models/collection_manifest'
 import InstalledResource from '#models/installed_resource'
 import { QueueService } from './queue_service.js'
 import { RunDownloadJob } from '#jobs/run_download_job'
-import { zimCategoriesSpecSchema, mapsSpecSchema, wikipediaSpecSchema } from '#validators/curated_collections'
+import {
+  zimCategoriesSpecSchema,
+  mapsSpecSchema,
+  wikipediaSpecSchema,
+} from '#validators/curated_collections'
 import {
   ensureDirectoryExists,
   listDirectoryContents,
   getFileStatsIfExists,
   ZIM_STORAGE_PATH,
 } from '../utils/fs.js'
+import { DATA_PATH, relativeProjectPath } from '../utils/paths.js'
 import type {
   ManifestType,
   ZimCategoriesSpec,
@@ -25,9 +30,11 @@ import type {
 } from '../../types/collections.js'
 
 const SPEC_URLS: Record<ManifestType, string> = {
-  zim_categories: 'https://raw.githubusercontent.com/seclib/monad/refs/heads/main/collections/kiwix-categories.json',
+  zim_categories:
+    'https://raw.githubusercontent.com/seclib/monad/refs/heads/main/collections/kiwix-categories.json',
   maps: 'https://github.com/seclib/monad/raw/refs/heads/main/collections/maps.json',
-  wikipedia: 'https://raw.githubusercontent.com/seclib/monad/refs/heads/main/collections/wikipedia.json',
+  wikipedia:
+    'https://raw.githubusercontent.com/seclib/monad/refs/heads/main/collections/wikipedia.json',
 }
 
 const VALIDATORS: Record<ManifestType, any> = {
@@ -37,7 +44,7 @@ const VALIDATORS: Record<ManifestType, any> = {
 }
 
 export class CollectionManifestService {
-  private readonly mapStoragePath = '/storage/maps'
+  private readonly mapStoragePath = join(relativeProjectPath(DATA_PATH), 'maps')
 
   // ---- Spec management ----
 
@@ -71,7 +78,10 @@ export class CollectionManifestService {
 
       return true
     } catch (error) {
-      logger.error(`[CollectionManifestService] Failed to fetch spec for ${type}:`, error?.message || error)
+      logger.error(
+        `[CollectionManifestService] Failed to fetch spec for ${type}:`,
+        error?.message || error
+      )
       return false
     }
   }
@@ -131,7 +141,10 @@ export class CollectionManifestService {
     } catch (error) {
       // Don't fail the whole categories endpoint if the queue is briefly
       // unreachable — just report no in-flight downloads.
-      logger.warn('[CollectionManifestService] Could not read download queue:', error?.message || error)
+      logger.warn(
+        '[CollectionManifestService] Could not read download queue:',
+        error?.message || error
+      )
     }
     return ids
   }
@@ -160,9 +173,7 @@ export class CollectionManifestService {
     for (const tier of reversedTiers) {
       const resolved = CollectionManifestService.resolveTierResources(tier, tiers)
       if (resolved.length === 0) continue
-      const allAccountedFor = resolved.every(
-        (r) => installedMap.has(r.id) || inFlightIds.has(r.id)
-      )
+      const allAccountedFor = resolved.every((r) => installedMap.has(r.id) || inFlightIds.has(r.id))
       if (allAccountedFor) {
         return tier.slug === installedTierSlug ? undefined : tier.slug
       }
@@ -208,7 +219,9 @@ export class CollectionManifestService {
     if (tier.includesTier) {
       const included = allTiers.find((t) => t.slug === tier.includesTier)
       if (included) {
-        resources.push(...CollectionManifestService._resolveTierResourcesInner(included, allTiers, visited))
+        resources.push(
+          ...CollectionManifestService._resolveTierResourcesInner(included, allTiers, visited)
+        )
       }
     }
 
@@ -258,7 +271,7 @@ export class CollectionManifestService {
     let zimCount = 0
     let mapCount = 0
 
-    console.log("RECONCILING FILESYSTEM MANIFESTS...")
+    logger.info('RECONCILING FILESYSTEM MANIFESTS...')
 
     // Reconcile ZIM files
     try {
@@ -267,7 +280,7 @@ export class CollectionManifestService {
       const zimItems = await listDirectoryContents(zimDir)
       const zimFiles = zimItems.filter((f) => f.name.endsWith('.zim'))
 
-      console.log(`Found ${zimFiles.length} ZIM files on disk. Reconciling with database...`)
+      logger.info(`Found ${zimFiles.length} ZIM files on disk. Reconciling with database...`)
 
       // Get spec for URL lookup
       const zimSpec = await this.getCachedSpec<ZimCategoriesSpec>('zim_categories')
@@ -285,12 +298,12 @@ export class CollectionManifestService {
       const seenZimIds = new Set<string>()
 
       for (const file of zimFiles) {
-        console.log(`Processing ZIM file: ${file.name}`)
+        logger.info(`Processing ZIM file: ${file.name}`)
         // Skip Wikipedia files (managed by WikipediaSelection model)
         if (file.name.startsWith('wikipedia_en_')) continue
 
         const parsed = CollectionManifestService.parseZimFilename(file.name)
-        console.log(`Parsed ZIM filename:`, parsed)
+        logger.info({ parsed }, 'Parsed ZIM filename')
         if (!parsed) continue
 
         seenZimIds.add(parsed.resource_id)
@@ -377,7 +390,9 @@ export class CollectionManifestService {
       logger.error('[CollectionManifestService] Error reconciling map files:', error)
     }
 
-    logger.info(`[CollectionManifestService] Reconciled ${zimCount} ZIM files, ${mapCount} map files`)
+    logger.info(
+      `[CollectionManifestService] Reconciled ${zimCount} ZIM files, ${mapCount} map files`
+    )
     return { zim: zimCount, map: mapCount }
   }
 }

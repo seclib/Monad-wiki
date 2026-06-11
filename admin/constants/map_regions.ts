@@ -1,4 +1,4 @@
-export const PMTILES_BINARY_PATH = '/usr/local/bin/pmtiles'
+export const PMTILES_BINARY_PATH = process.env.PMTILES_BINARY_PATH || 'bin/pmtiles'
 
 // Clamp these so a user can't ask for nonsense that never extracts
 export const EXTRACT_MIN_ZOOM = 0

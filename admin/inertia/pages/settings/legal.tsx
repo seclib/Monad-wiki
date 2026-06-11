@@ -12,21 +12,27 @@ export default function LegalPage() {
           {/* License Agreement */}
           <section className="mb-10">
             <h2 className="text-2xl font-semibold mb-4">License Agreement</h2>
-            <p className="text-text-primary mb-3">Copyright 2024-2026 Crosstalk Solutions, LLC</p>
+            <p className="text-text-primary mb-3">Copyright 2024-2026 seclib</p>
             <p className="text-text-primary mb-3">
-              Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
-              you may not use this file except in compliance with the License.
-              You may obtain a copy of the License at
+              Licensed under the MIT License. Permission is hereby granted, free of charge, to any
+              person obtaining a copy of this software and associated documentation files to use,
+              copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+              software, subject to the license terms.
             </p>
             <p className="text-text-primary mb-3">
-              <a href="https://www.apache.org/licenses/LICENSE-2.0" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">https://www.apache.org/licenses/LICENSE-2.0</a>
+              <a
+                href="https://opensource.org/license/mit"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:underline"
+              >
+                https://opensource.org/license/mit
+              </a>
             </p>
             <p className="text-text-primary">
-              Unless required by applicable law or agreed to in writing, software
-              distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
-              WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-              See the License for the specific language governing permissions and
-              limitations under the License.
+              The software is provided &quot;AS IS&quot;, without warranty of any kind, express or
+              implied, including but not limited to the warranties of merchantability, fitness for a
+              particular purpose, and noninfringement.
             </p>
           </section>
 
@@ -34,39 +40,84 @@ export default function LegalPage() {
           <section className="mb-10">
             <h2 className="text-2xl font-semibold mb-4">Third-Party Software Attribution</h2>
             <p className="text-text-primary mb-4">
-              MONAD integrates the following open source projects. We are grateful to
-              their developers and communities:
+              MONAD integrates the following open source projects. We are grateful to their
+              developers and communities:
             </p>
             <ul className="space-y-3 text-text-primary">
               <li>
                 <strong>Kiwix</strong> - Offline Wikipedia and content reader (GPL-3.0 License)
                 <br />
-                <a href="https://kiwix.org" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">https://kiwix.org</a>
+                <a
+                  href="https://kiwix.org"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:underline"
+                >
+                  https://kiwix.org
+                </a>
               </li>
               <li>
-                <strong>Kolibri</strong> - Offline learning platform by Learning Equality (MIT License)
+                <strong>Kolibri</strong> - Offline learning platform by Learning Equality (MIT
+                License)
                 <br />
-                <a href="https://learningequality.org/kolibri" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">https://learningequality.org/kolibri</a>
+                <a
+                  href="https://learningequality.org/kolibri"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:underline"
+                >
+                  https://learningequality.org/kolibri
+                </a>
               </li>
               <li>
                 <strong>Ollama</strong> - Local large language model runtime (MIT License)
                 <br />
-                <a href="https://ollama.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">https://ollama.com</a>
+                <a
+                  href="https://ollama.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:underline"
+                >
+                  https://ollama.com
+                </a>
               </li>
               <li>
-                <strong>CyberChef</strong> - Data analysis and encoding toolkit by GCHQ (Apache 2.0 License)
+                <strong>CyberChef</strong> - Data analysis and encoding toolkit by GCHQ (Apache 2.0
+                License)
                 <br />
-                <a href="https://github.com/gchq/CyberChef" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">https://github.com/gchq/CyberChef</a>
+                <a
+                  href="https://github.com/gchq/CyberChef"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:underline"
+                >
+                  https://github.com/gchq/CyberChef
+                </a>
               </li>
               <li>
                 <strong>FlatNotes</strong> - Self-hosted note-taking application (MIT License)
                 <br />
-                <a href="https://github.com/dullage/flatnotes" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">https://github.com/dullage/flatnotes</a>
+                <a
+                  href="https://github.com/dullage/flatnotes"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:underline"
+                >
+                  https://github.com/dullage/flatnotes
+                </a>
               </li>
               <li>
-                <strong>Qdrant</strong> - Vector search engine for AI knowledge base (Apache 2.0 License)
+                <strong>Qdrant</strong> - Vector search engine for AI knowledge base (Apache 2.0
+                License)
                 <br />
-                <a href="https://github.com/qdrant/qdrant" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">https://github.com/qdrant/qdrant</a>
+                <a
+                  href="https://github.com/qdrant/qdrant"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:underline"
+                >
+                  https://github.com/qdrant/qdrant
+                </a>
               </li>
             </ul>
           </section>
@@ -78,10 +129,22 @@ export default function LegalPage() {
               MONAD is designed with privacy as a core principle:
             </p>
             <ul className="list-disc list-inside space-y-2 text-text-primary">
-              <li><strong>Zero Telemetry:</strong> MONAD does not collect, transmit, or store any usage data, analytics, or telemetry.</li>
-              <li><strong>Local-First:</strong> All your data, downloaded content, AI conversations, and notes remain on your device.</li>
-              <li><strong>No Accounts Required:</strong> MONAD operates without user accounts or authentication by default.</li>
-              <li><strong>Network Optional:</strong> An internet connection is only required to download content or updates. All installed features work fully offline.</li>
+              <li>
+                <strong>Zero Telemetry:</strong> MONAD does not collect, transmit, or store any
+                usage data, analytics, or telemetry.
+              </li>
+              <li>
+                <strong>Local-First:</strong> All your data, downloaded content, AI conversations,
+                and notes remain on your device.
+              </li>
+              <li>
+                <strong>No Accounts Required:</strong> MONAD operates without user accounts or
+                authentication by default.
+              </li>
+              <li>
+                <strong>Network Optional:</strong> An internet connection is only required to
+                download content or updates. All installed features work fully offline.
+              </li>
             </ul>
           </section>
 
@@ -89,14 +152,14 @@ export default function LegalPage() {
           <section className="mb-10">
             <h2 className="text-2xl font-semibold mb-4">Content Disclaimer</h2>
             <p className="text-text-primary mb-3">
-              MONAD provides tools to download and access content from third-party sources
-              including Wikipedia, Wikibooks, medical references, educational platforms, and other
-              publicly available resources.
+              MONAD provides tools to download and access content from third-party sources including
+              Wikipedia, Wikibooks, medical references, educational platforms, and other publicly
+              available resources.
             </p>
             <p className="text-text-primary mb-3">
-              Crosstalk Solutions, LLC does not create, control, verify, or guarantee the accuracy,
-              completeness, or reliability of any third-party content. The inclusion of any content
-              does not constitute an endorsement.
+              seclib does not create, control, verify, or guarantee the accuracy, completeness, or
+              reliability of any third-party content. The inclusion of any content does not
+              constitute an endorsement.
             </p>
             <p className="text-text-primary">
               Users are responsible for evaluating the appropriateness and accuracy of any content
@@ -106,20 +169,32 @@ export default function LegalPage() {
 
           {/* Medical Disclaimer */}
           <section className="mb-10">
-            <h2 className="text-2xl font-semibold mb-4">Medical and Emergency Information Disclaimer</h2>
+            <h2 className="text-2xl font-semibold mb-4">
+              Medical and Emergency Information Disclaimer
+            </h2>
             <p className="text-text-primary mb-3">
               Some content available through MONAD includes medical references, first aid guides,
               and emergency preparedness information. This content is provided for general
               informational purposes only.
             </p>
             <p className="text-text-primary mb-3 font-semibold">
-              This information is NOT a substitute for professional medical advice, diagnosis, or treatment.
+              This information is NOT a substitute for professional medical advice, diagnosis, or
+              treatment.
             </p>
             <ul className="list-disc list-inside space-y-2 text-text-primary mb-3">
-              <li>Always seek the advice of qualified health providers with questions about medical conditions.</li>
-              <li>Never disregard professional medical advice or delay seeking it because of something you read in offline content.</li>
+              <li>
+                Always seek the advice of qualified health providers with questions about medical
+                conditions.
+              </li>
+              <li>
+                Never disregard professional medical advice or delay seeking it because of something
+                you read in offline content.
+              </li>
               <li>In a medical emergency, call emergency services immediately if available.</li>
-              <li>Medical information may become outdated. Verify critical information with current professional sources when possible.</li>
+              <li>
+                Medical information may become outdated. Verify critical information with current
+                professional sources when possible.
+              </li>
             </ul>
           </section>
 
@@ -130,16 +205,21 @@ export default function LegalPage() {
               All data associated with MONAD is stored locally on your device:
             </p>
             <ul className="list-disc list-inside space-y-2 text-text-primary">
-              <li><strong>Installation Directory:</strong> /opt/monad</li>
-              <li><strong>Downloaded Content:</strong> /opt/monad/storage</li>
-              <li><strong>Application Data:</strong> Stored in Docker volumes on your local system</li>
+              <li>
+                <strong>Installation Directory:</strong> MONAD project folder
+              </li>
+              <li>
+                <strong>Downloaded Content:</strong> storage/
+              </li>
+              <li>
+                <strong>Application Data:</strong> storage/, logs/, cache/, config/, models/, data/
+              </li>
             </ul>
             <p className="text-text-primary mt-3">
               You maintain full control over your data. Uninstalling MONAD or deleting these
               directories will permanently remove all associated data.
             </p>
           </section>
-
         </main>
       </div>
     </SettingsLayout>
