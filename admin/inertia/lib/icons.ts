@@ -10,7 +10,9 @@ import {
   IconCloudUpload,
   IconCpu,
   IconDatabase,
+  IconDeviceFloppy,
   IconDownload,
+  IconEye,
   IconHome,
   IconLogs,
   IconNotes,
@@ -20,6 +22,7 @@ import {
   IconRefreshAlert,
   IconRobot,
   IconSchool,
+  IconSearch,
   IconSettings,
   IconTrash,
   IconUpload,
@@ -73,7 +76,9 @@ export const icons = {
   IconCopy,
   IconCpu,
   IconDatabase,
+  IconDeviceFloppy,
   IconDownload,
+  IconEye,
   IconHome,
   IconInfoCircle,
   IconLibrary,
@@ -89,6 +94,7 @@ export const icons = {
   IconRefreshAlert,
   IconRobot,
   IconSchool,
+  IconSearch,
   IconServer,
   IconSettings,
   IconShieldCheck,
@@ -100,7 +106,7 @@ export const icons = {
   IconWand,
   IconWorld,
   IconX,
-  IconXboxX
+  IconXboxX,
 } as const
 
 export type DynamicIconName = keyof typeof icons

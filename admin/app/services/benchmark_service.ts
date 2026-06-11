@@ -24,7 +24,6 @@ import type {
 } from '../../types/benchmark.js'
 import { randomUUID, createHmac } from 'node:crypto'
 import { DockerService } from './docker_service.js'
-import { SERVICE_NAMES } from '../../constants/service_names.js'
 import { BROADCAST_CHANNELS } from '../../constants/broadcast.js'
 import Dockerode from 'dockerode'
 
@@ -467,9 +466,11 @@ export class BenchmarkService {
 
     this._updateStatus('running_ai', 'Running AI benchmark...')
 
-    const ollamaAPIURL = await this.dockerService.getServiceURL(SERVICE_NAMES.OLLAMA)
-    if (!ollamaAPIURL) {
-      throw new Error('AI Assistant service location could not be determined. Ensure AI Assistant is installed and running.')
+    const ollamaService = new (await import('./ollama_service.js')).OllamaService()
+    const ollamaHealth = await ollamaService.health()
+    const ollamaAPIURL = ollamaHealth.baseUrl
+    if (!ollamaHealth.online || !ollamaAPIURL) {
+      throw new Error('Ollama API is not reachable. Start the host Ollama service and verify OLLAMA_BASE_URL.')
     }
 
     // Check if Ollama is available
@@ -481,7 +482,6 @@ export class BenchmarkService {
     }
 
     // Check if the benchmark model is available, pull if not
-    const ollamaService = new (await import('./ollama_service.js')).OllamaService()
     const modelResponse = await ollamaService.downloadModel(AI_BENCHMARK_MODEL)
     if (!modelResponse.success) {
       throw new Error(`Model does not exist and failed to download: ${modelResponse.message}`)

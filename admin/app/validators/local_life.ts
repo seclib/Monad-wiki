@@ -1,6 +1,12 @@
 import vine from '@vinejs/vine'
 
-export const documentCategories = ['administratif', 'sante', 'travail', 'education', 'maison'] as const
+export const documentCategories = [
+  'administratif',
+  'sante',
+  'travail',
+  'education',
+  'maison',
+] as const
 export const serviceCategories = [
   'pharmacies',
   'medecins',
@@ -9,7 +15,10 @@ export const serviceCategories = [
   'commerces_locaux',
 ] as const
 
-const tagsSchema = vine.array(vine.string().trim().minLength(1).maxLength(40)).maxLength(12).optional()
+const tagsSchema = vine
+  .array(vine.string().trim().minLength(1).maxLength(40))
+  .maxLength(12)
+  .optional()
 
 export const documentMetadataValidator = vine.compile(
   vine.object({

@@ -95,7 +95,10 @@ export class RunDownloadJob {
             // and the Redis write completing — this is expected and safe to ignore.
             if (err?.code !== -1) throw err
           })
-          lastKnownProgress = { downloadedBytes: progress.downloadedBytes, totalBytes: progress.totalBytes }
+          lastKnownProgress = {
+            downloadedBytes: progress.downloadedBytes,
+            totalBytes: progress.totalBytes,
+          }
         },
         async onComplete(url) {
           try {
@@ -114,7 +117,10 @@ export class RunDownloadJob {
               const oldFilePath = oldEntry?.file_path ?? null
 
               await InstalledResource.updateOrCreate(
-                { resource_id: resourceMetadata.resource_id, resource_type: filetype as 'zim' | 'map' },
+                {
+                  resource_id: resourceMetadata.resource_id,
+                  resource_type: filetype as 'zim' | 'map',
+                },
                 {
                   version: resourceMetadata.version,
                   collection_ref: resourceMetadata.collection_ref,
@@ -144,9 +150,11 @@ export class RunDownloadJob {
               const zimService = new ZimService(dockerService)
               await zimService.downloadRemoteSuccessCallback([url], true)
 
-              // Only dispatch embedding job if AI Assistant (Ollama) is installed
-              const ollamaUrl = await dockerService.getServiceURL('monad_ollama')
-              if (ollamaUrl) {
+              // Only dispatch embedding job if the configured Ollama API is reachable.
+              // In local-first deployments, Ollama runs on the host, outside Compose.
+              const { OllamaService } = await import('#services/ollama_service')
+              const ollamaHealth = await new OllamaService().health()
+              if (ollamaHealth.online) {
                 // Respect the global ingest policy. Under Manual, record the file
                 // as pending_decision so the KB panel surfaces the per-file Index
                 // affordance (PR #909) instead of silently auto-embedding behind
@@ -179,7 +187,10 @@ export class RunDownloadJob {
                       filePath: filepath,
                     })
                   } catch (error) {
-                    console.error(`[RunDownloadJob] Error dispatching EmbedFileJob for URL ${url}:`, error)
+                    console.error(
+                      `[RunDownloadJob] Error dispatching EmbedFileJob for URL ${url}:`,
+                      error
+                    )
                   }
                 }
               }
@@ -193,14 +204,16 @@ export class RunDownloadJob {
               error
             )
           }
-          job.updateProgress({
-            percent: 100,
-            downloadedBytes: lastKnownProgress.downloadedBytes,
-            totalBytes: lastKnownProgress.totalBytes,
-            lastProgressTime: Date.now(),
-          } as DownloadProgressData).catch((err) => {
-            if (err?.code !== -1) throw err
-          })
+          job
+            .updateProgress({
+              percent: 100,
+              downloadedBytes: lastKnownProgress.downloadedBytes,
+              totalBytes: lastKnownProgress.totalBytes,
+              lastProgressTime: Date.now(),
+            } as DownloadProgressData)
+            .catch((err) => {
+              if (err?.code !== -1) throw err
+            })
         },
       })
 

@@ -29,14 +29,20 @@ export default class GpuPassthroughRemediationProvider {
     setImmediate(async () => {
       try {
         const KVStore = (await import('#models/kv_store')).default
+        const env = (await import('#start/env')).default
         const { DockerService } = await import('#services/docker_service')
         const { SERVICE_NAMES } = await import('../constants/service_names.js')
         const Docker = (await import('dockerode')).default
 
         const enabledRaw = await KVStore.getValue('ai.autoFixGpuPassthrough')
         if (String(enabledRaw) === 'false') {
+          logger.info('[GpuPassthroughRemediationProvider] Auto-fix disabled via KV — skipping.')
+          return
+        }
+
+        if (env.get('OLLAMA_BASE_URL')) {
           logger.info(
-            '[GpuPassthroughRemediationProvider] Auto-fix disabled via KV — skipping.'
+            '[GpuPassthroughRemediationProvider] External Ollama configured — skipping Docker GPU remediation.'
           )
           return
         }
@@ -57,9 +63,7 @@ export default class GpuPassthroughRemediationProvider {
         const ollama = containers.find((c) => c.Names.includes(`/${SERVICE_NAMES.OLLAMA}`))
 
         if (!ollama) {
-          logger.info(
-            '[GpuPassthroughRemediationProvider] monad_ollama not running — skipping.'
-          )
+          logger.info('[GpuPassthroughRemediationProvider] monad_ollama not running — skipping.')
           return
         }
 

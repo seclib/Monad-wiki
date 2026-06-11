@@ -15,6 +15,7 @@ services:
 
     volumes:
       - /opt/monad/storage:/app/storage
+      - /opt/monad/vault:/vault
       - /var/run/docker.sock:/var/run/docker.sock
       - monad-update-shared:/app/update-shared
 
@@ -60,6 +61,8 @@ services:
       - SYSTEM_PROMPT=Tu es l'assistant IA de MONAD pour La Réunion. Tu réponds toujours en français clair, naturel et structuré, avec le contexte local de La Réunion lorsque c'est pertinent, sauf demande explicite contraire.
 
       - DISABLE_COMPRESSION=false
+      - OLLAMA_BASE_URL=http://host.docker.internal:11434
+      - VAULT_PATH=/vault
 
     depends_on:
       mysql:
@@ -99,7 +102,6 @@ services:
       - DOZZLE_ENABLE_ACTIONS=false
       - DOZZLE_ENABLE_SHELL=false
 
-
   mysql:
     image: mysql:8.0
     container_name: monad_mysql
@@ -120,7 +122,6 @@ services:
       timeout: 10s
       retries: 10
 
-
   redis:
     image: redis:7-alpine
     container_name: monad_redis
@@ -135,7 +136,6 @@ services:
       timeout: 10s
       retries: 3
 
-
   updater:
     image: ghcr.io/crosstalk-solutions/project-nomad-sidecar-updater:latest
     pull_policy: missing
@@ -147,7 +147,6 @@ services:
       - /opt/monad:/opt/monad
       - monad-update-shared:/shared
 
-
   disk-collector:
     image: ghcr.io/crosstalk-solutions/project-nomad-disk-collector:latest
     pull_policy: missing
@@ -157,7 +156,6 @@ services:
     volumes:
       - /:/host:ro,rslave
       - /opt/monad/storage:/storage
-
 
 volumes:
   monad-update-shared:

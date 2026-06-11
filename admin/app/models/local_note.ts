@@ -24,6 +24,9 @@ export default class LocalNote extends BaseModel {
   @column()
   declare pinned: boolean
 
+  @column()
+  declare vault_path: string | null
+
   @column.dateTime({ autoCreate: true })
   declare created_at: DateTime
 

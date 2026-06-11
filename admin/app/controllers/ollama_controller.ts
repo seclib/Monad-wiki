@@ -12,6 +12,7 @@ import type { HttpContext } from '@adonisjs/core/http'
 import { RAG_CONTEXT_LIMITS, SYSTEM_PROMPTS } from '../../constants/ollama.js'
 import { SERVICE_NAMES } from '../../constants/service_names.js'
 import logger from '@adonisjs/core/services/logger'
+import env from '#start/env'
 type Message = { role: 'system' | 'user' | 'assistant'; content: string }
 
 @inject()
@@ -204,7 +205,7 @@ export default class OllamaController {
   }
 
   async remoteStatus() {
-    const remoteUrl = await KVStore.getValue('ai.remoteOllamaUrl')
+    const remoteUrl = (await KVStore.getValue('ai.remoteOllamaUrl')) || env.get('OLLAMA_BASE_URL')
     if (!remoteUrl) {
       return { configured: false, connected: false }
     }
@@ -231,6 +232,15 @@ export default class OllamaController {
     // the service marked installed. Otherwise fall back to uninstalled.
     if (!remoteUrl || remoteUrl.trim() === '') {
       await KVStore.clearValue('ai.remoteOllamaUrl')
+      if (env.get('OLLAMA_BASE_URL')) {
+        ollamaService.installed = true
+        ollamaService.installation_status = 'idle'
+        await ollamaService.save()
+        return {
+          success: true,
+          message: 'Remote Ollama override cleared. MONAD will use OLLAMA_BASE_URL.',
+        }
+      }
       const hasLocalContainer = await this._startLocalOllamaContainerIfExists()
       ollamaService.installed = hasLocalContainer
       ollamaService.installation_status = 'idle'

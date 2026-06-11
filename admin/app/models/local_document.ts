@@ -36,6 +36,9 @@ export default class LocalDocument extends BaseModel {
   @column()
   declare size_bytes: number
 
+  @column()
+  declare vault_path: string | null
+
   @column.dateTime({ autoCreate: true })
   declare created_at: DateTime
 

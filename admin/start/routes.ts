@@ -7,11 +7,13 @@
 |
 */
 import BenchmarkController from '#controllers/benchmark_controller'
+import AiController from '#controllers/ai_controller'
 import ChatsController from '#controllers/chats_controller'
 import DocsController from '#controllers/docs_controller'
 import DownloadsController from '#controllers/downloads_controller'
 import EasySetupController from '#controllers/easy_setup_controller'
 import HomeController from '#controllers/home_controller'
+import LocalLifeController from '#controllers/local_life_controller'
 import MapsController from '#controllers/maps_controller'
 import OllamaController from '#controllers/ollama_controller'
 import RagController from '#controllers/rag_controller'
@@ -20,6 +22,7 @@ import SystemController from '#controllers/system_controller'
 import CollectionUpdatesController from '#controllers/collection_updates_controller'
 import ZimController from '#controllers/zim_controller'
 import WikiIntelligenceController from '#controllers/wiki_intelligence_controller'
+import VaultController from '#controllers/vault_controller'
 import router from '@adonisjs/core/services/router'
 import transmit from '@adonisjs/transmit/services/main'
 
@@ -30,6 +33,10 @@ router.get('/home', [HomeController, 'home'])
 router.on('/about').renderInertia('about')
 router.get('/chat', [ChatsController, 'inertia'])
 router.get('/maps', [MapsController, 'index'])
+router.get('/local-life', [LocalLifeController, 'dashboardPage'])
+router.get('/local-life/documents', [LocalLifeController, 'documentsPage'])
+router.get('/local-life/notes', [LocalLifeController, 'notesPage'])
+router.get('/local-life/services', [LocalLifeController, 'servicesPage'])
 router.on('/knowledge-base').redirectToPath('/chat?knowledge_base=true') // redirect for legacy knowledge-base links
 
 router.get('/easy-setup', [EasySetupController, 'index'])
@@ -101,6 +108,34 @@ router
 
 router
   .group(() => {
+    router.get('/dashboard', [LocalLifeController, 'dashboard'])
+    router.get('/search', [LocalLifeController, 'unifiedSearch'])
+
+    router.get('/docs', [LocalLifeController, 'listDocuments'])
+    router.post('/docs', [LocalLifeController, 'uploadDocument'])
+    router.get('/docs/:id/download', [LocalLifeController, 'downloadDocument'])
+    router.patch('/docs/:id', [LocalLifeController, 'updateDocument'])
+    router.delete('/docs/:id', [LocalLifeController, 'deleteDocument'])
+
+    router.get('/notes', [LocalLifeController, 'listNotes'])
+    router.post('/notes', [LocalLifeController, 'createNote'])
+    router.patch('/notes/:id', [LocalLifeController, 'updateNote'])
+    router.delete('/notes/:id', [LocalLifeController, 'deleteNote'])
+
+    router.get('/services', [LocalLifeController, 'listServices'])
+    router.post('/services', [LocalLifeController, 'createService'])
+    router.patch('/services/:id', [LocalLifeController, 'updateService'])
+    router.delete('/services/:id', [LocalLifeController, 'deleteService'])
+
+    router.get('/reminders', [LocalLifeController, 'listReminders'])
+    router.post('/reminders', [LocalLifeController, 'createReminder'])
+    router.patch('/reminders/:id', [LocalLifeController, 'updateReminder'])
+    router.delete('/reminders/:id', [LocalLifeController, 'deleteReminder'])
+  })
+  .prefix('/api/local-life')
+
+router
+  .group(() => {
     router.get('/jobs', [DownloadsController, 'index'])
     router.get('/jobs/:filetype', [DownloadsController, 'filetype'])
     router.delete('/jobs/:jobId', [DownloadsController, 'removeJob'])
@@ -149,6 +184,17 @@ router.post('/api/wiki/ask', [WikiIntelligenceController, 'ask'])
 router.post('/api/wiki/summarize', [WikiIntelligenceController, 'summarize'])
 router.post('/api/wiki/related', [WikiIntelligenceController, 'related'])
 router.post('/api/wiki/tags', [WikiIntelligenceController, 'tags'])
+
+router.post('/ai/query', [AiController, 'query'])
+router.get('/vault/status', [VaultController, 'status'])
+router.post('/vault/save', [VaultController, 'save'])
+router.get('/vault/list', [VaultController, 'list'])
+router.get('/vault/search', [VaultController, 'search'])
+router.post('/api/ai/query', [AiController, 'query'])
+router.get('/api/vault/status', [VaultController, 'status'])
+router.post('/api/vault/save', [VaultController, 'save'])
+router.get('/api/vault/list', [VaultController, 'list'])
+router.get('/api/vault/search', [VaultController, 'search'])
 
 router
   .group(() => {

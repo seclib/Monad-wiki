@@ -1,5 +1,6 @@
 import {
   IconBolt,
+  IconCalendarStats,
   IconHelp,
   IconMapRoute,
   IconPlus,
@@ -26,6 +27,17 @@ const MAPS_ITEM = {
   installed: true,
   displayOrder: 4,
   poweredBy: null,
+}
+
+const LOCAL_LIFE_ITEM = {
+  label: 'Vie locale',
+  to: '/local-life',
+  target: '',
+  description: 'Notes, documents et services utiles à La Réunion',
+  icon: <IconCalendarStats size={48} />,
+  installed: true,
+  displayOrder: 5,
+  poweredBy: 'MONAD',
 }
 
 // System items shown after all apps
@@ -128,6 +140,9 @@ export default function Home(props: {
 
   // Add Maps as a Core Capability
   items.push(MAPS_ITEM)
+
+  // Add Local Life as an offline-first local module
+  items.push(LOCAL_LIFE_ITEM)
 
   // Add system items
   items.push(...SYSTEM_ITEMS)

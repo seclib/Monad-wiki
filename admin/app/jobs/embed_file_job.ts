@@ -15,7 +15,7 @@ export interface EmbedFileJobParams {
   fileName: string
   fileSize?: number
   // Batch processing for large ZIM files
-  batchOffset?: number  // Current batch offset (for ZIM files)
+  batchOffset?: number // Current batch offset (for ZIM files)
   totalArticles?: number // Total articles in ZIM (for progress tracking)
   isFinalBatch?: boolean // Whether this is the last batch (prevents premature deletion)
 }
@@ -62,25 +62,22 @@ export class EmbedFileJob {
     const ragService = new RagService(dockerService, ollamaService)
 
     try {
-      // Check if Ollama and Qdrant services are installed and ready
-      // Use UnrecoverableError for "not installed" so BullMQ won't retry —
-      // retrying 30x when the service doesn't exist just wastes Redis connections
-      const ollamaUrl = await dockerService.getServiceURL('monad_ollama')
-      if (!ollamaUrl) {
-        logger.warn('[EmbedFileJob] Ollama is not installed. Skipping embedding for: %s', fileName)
-        throw new UnrecoverableError('Ollama service is not installed. Install AI Assistant to enable file embeddings.')
-      }
-
-      const existingModels = await ollamaService.getModels()
-      if (!existingModels) {
-        logger.warn('[EmbedFileJob] Ollama service not ready yet. Will retry...')
-        throw new Error('Ollama service not ready yet')
+      // Ollama is an external local service in local-first deployments. Check
+      // the configured HTTP API instead of requiring a Docker-managed container.
+      const ollamaHealth = await ollamaService.health()
+      if (!ollamaHealth.online) {
+        logger.warn('[EmbedFileJob] Ollama API is offline. Skipping embedding for: %s', fileName)
+        throw new UnrecoverableError(
+          'Ollama API is offline. Start the host Ollama service to enable file embeddings.'
+        )
       }
 
       const qdrantUrl = await dockerService.getServiceURL('monad_qdrant')
       if (!qdrantUrl) {
         logger.warn('[EmbedFileJob] Qdrant is not installed. Skipping embedding for: %s', fileName)
-        throw new UnrecoverableError('Qdrant service is not installed. Install AI Assistant to enable file embeddings.')
+        throw new UnrecoverableError(
+          'Qdrant service is not installed. Install AI Assistant to enable file embeddings.'
+        )
       }
 
       logger.info(`[EmbedFileJob] Services ready. Processing file: ${fileName}`)
@@ -142,9 +139,7 @@ export class EmbedFileJob {
       // For ZIM files with batching, check if more batches are needed
       if (result.hasMoreBatches) {
         const nextOffset = (batchOffset || 0) + (result.articlesProcessed || 0)
-        logger.info(
-          `[EmbedFileJob] Batch complete. Dispatching next batch at offset ${nextOffset}`
-        )
+        logger.info(`[EmbedFileJob] Batch complete. Dispatching next batch at offset ${nextOffset}`)
 
         // Pace continuation batches when embedding is CPU-bound. Sustained 100% CPU
         // saturation across all cores during multi-batch ZIM ingestion can starve
@@ -169,9 +164,7 @@ export class EmbedFileJob {
         })
 
         // Calculate progress based on articles processed
-        const progress = totalArticles
-          ? Math.round((nextOffset / totalArticles) * 100)
-          : 50
+        const progress = totalArticles ? Math.round((nextOffset / totalArticles) * 100) : 50
 
         await this.safeUpdateProgress(job, progress)
         await job.updateData({
@@ -332,9 +325,7 @@ export class EmbedFileJob {
         : force
           ? ' (forced re-dispatch)'
           : ''
-      logger.info(
-        `[EmbedFileJob] Dispatched embedding job for file: ${params.fileName}${label}`
-      )
+      logger.info(`[EmbedFileJob] Dispatched embedding job for file: ${params.fileName}${label}`)
 
       return {
         job,

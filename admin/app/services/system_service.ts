@@ -113,7 +113,14 @@ export class SystemService {
       const startedAtMs = startedAtRaw ? new Date(startedAtRaw).getTime() : NaN
       const hasValidStartedAt = Number.isFinite(startedAtMs) && startedAtMs > 0
 
-      const logsOpts: { stdout: true; stderr: true; follow: false; since?: number; until?: number; tail?: number } = {
+      const logsOpts: {
+        stdout: true
+        stderr: true
+        follow: false
+        since?: number
+        until?: number
+        tail?: number
+      } = {
         stdout: true,
         stderr: true,
         follow: false,
@@ -143,9 +150,7 @@ export class SystemService {
 
       return {
         library: libraryMatch[1] as 'CUDA' | 'ROCm',
-        name:
-          descMatch?.[1] ||
-          (libraryMatch[1] === 'CUDA' ? 'NVIDIA GPU' : 'AMD GPU'),
+        name: descMatch?.[1] || (libraryMatch[1] === 'CUDA' ? 'NVIDIA GPU' : 'AMD GPU'),
         vramMiB: totalMatch ? Math.round(Number.parseFloat(totalMatch[1]) * 1024) : 0,
       }
     } catch (error) {
@@ -240,7 +245,8 @@ export class SystemService {
   }> | null> {
     try {
       // If a remote Ollama URL is configured, use it directly without requiring a local container
-      const remoteOllamaUrl = await KVStore.getValue('ai.remoteOllamaUrl')
+      const remoteOllamaUrl =
+        (await KVStore.getValue('ai.remoteOllamaUrl')) || env.get('OLLAMA_BASE_URL')
       if (!remoteOllamaUrl) {
         const containers = await this.dockerService.docker.listContainers({ all: false })
         const ollamaContainer = containers.find((c) => c.Names.includes(`/${SERVICE_NAMES.OLLAMA}`))
@@ -254,7 +260,8 @@ export class SystemService {
         }
       }
 
-      const ollamaUrl = remoteOllamaUrl || (await this.dockerService.getServiceURL(SERVICE_NAMES.OLLAMA))
+      const ollamaUrl =
+        remoteOllamaUrl || (await this.dockerService.getServiceURL(SERVICE_NAMES.OLLAMA))
       if (!ollamaUrl) {
         return null
       }
@@ -458,11 +465,7 @@ export class SystemService {
 
         // Run the probes when controllers are empty (common inside Docker) or
         // when lspci gave us bogus discrete-GPU BAR0 values that need replacing.
-        if (
-          !graphics.controllers ||
-          graphics.controllers.length === 0 ||
-          hasLspciBogusDgpuVram
-        ) {
+        if (!graphics.controllers || graphics.controllers.length === 0 || hasLspciBogusDgpuVram) {
           const runtimes = dockerInfo.Runtimes || {}
           gpuHealth.hasNvidiaRuntime = 'nvidia' in runtimes
 
@@ -471,7 +474,9 @@ export class SystemService {
           //   2. Marker file at /app/storage/.monad-gpu-type (written by install_monad.sh)
           // The marker file matters because the System page should reflect AMD presence
           // even before AI Assistant has been installed for the first time.
-          let savedGpuType: string | null | undefined = await KVStore.getValue('gpu.type') as string | undefined
+          let savedGpuType: string | null | undefined = (await KVStore.getValue('gpu.type')) as
+            | string
+            | undefined
           if (!savedGpuType) {
             try {
               savedGpuType = (await readFile('/app/storage/.monad-gpu-type', 'utf8')).trim()
@@ -631,10 +636,10 @@ export class SystemService {
 
       let latestVersion: string
       if (earlyAccess) {
-        const response = await axios.get(
-          'https://api.github.com/repos/seclib/monad/releases',
-          { headers: { Accept: 'application/vnd.github+json' }, timeout: 5000 }
-        )
+        const response = await axios.get('https://api.github.com/repos/seclib/monad/releases', {
+          headers: { Accept: 'application/vnd.github+json' },
+          timeout: 5000,
+        })
         if (!response?.data?.length) throw new Error('No releases found')
         latestVersion = response.data[0].tag_name.replace(/^v/, '').trim()
       } else {

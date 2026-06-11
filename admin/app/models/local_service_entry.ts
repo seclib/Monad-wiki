@@ -42,6 +42,9 @@ export default class LocalServiceEntry extends BaseModel {
   })
   declare tags: string[]
 
+  @column()
+  declare vault_path: string | null
+
   @column.dateTime({ autoCreate: true })
   declare created_at: DateTime
 

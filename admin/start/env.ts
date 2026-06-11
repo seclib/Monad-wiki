@@ -20,6 +20,8 @@ export default await Env.create(new URL('../', import.meta.url), {
   LOG_LEVEL: Env.schema.string(),
   INTERNET_STATUS_TEST_URL: Env.schema.string.optional(),
   DISABLE_COMPRESSION: Env.schema.boolean.optional(),
+  OLLAMA_BASE_URL: Env.schema.string.optional(),
+  VAULT_PATH: Env.schema.string.optional(),
 
   /*
   |----------------------------------------------------------
