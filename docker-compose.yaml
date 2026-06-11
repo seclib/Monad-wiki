@@ -3,15 +3,15 @@ name: monad
 services:
   admin:
     image: ghcr.io/crosstalk-solutions/project-nomad:latest
-    pull_policy: always
+    pull_policy: missing
     container_name: monad_admin
     restart: unless-stopped
 
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
-    ports:
-      - "4080:8050"
+    expose:
+      - "8050"
 
     volumes:
       - /opt/monad/storage:/app/storage
@@ -23,11 +23,17 @@ services:
       - PORT=8050
       - LOG_LEVEL=info
       - APP_AUTHOR=seclib
-      - PROJECT_NAME=monad
+      - PROJECT_NAME=MONAD
+      - PROJECT_REGION=Reunion
+      - PROJECT_TAGLINE=Optimisé pour La Réunion
+      - PROJECT_DESCRIPTION=Système local de gestion et de connaissance
+      - DEFAULT_LANGUAGE=fr
+      - APP_LOCALE=fr_FR
+      - DATE_FORMAT=DD/MM/YYYY
 
       # ⚠️ CONFIG OBLIGATOIRE
       - APP_KEY=ujFhYN8ahpY4ko8PThD/LrByad+4CnLU5HQ9emG/N/o=
-      - URL=http://monad.local:4080
+      - URL=http://monad.local
       - DB_PASSWORD=replaceme
 
       # 🌐 Serveur
@@ -51,7 +57,7 @@ services:
       - LC_ALL=fr_FR.UTF-8
 
       # 🧠 IA → FR par défaut
-      - SYSTEM_PROMPT=Tu es un assistant IA francophone. Tu réponds toujours en français clair, naturel et structuré sauf demande explicite contraire.
+      - SYSTEM_PROMPT=Tu es l'assistant IA de MONAD pour La Réunion. Tu réponds toujours en français clair, naturel et structuré, avec le contexte local de La Réunion lorsque c'est pertinent, sauf demande explicite contraire.
 
       - DISABLE_COMPRESSION=false
 
@@ -70,12 +76,10 @@ services:
     image: caddy:latest
     container_name: monad_caddy
     restart: unless-stopped
-    profiles:
-      - proxy
     ports:
       - "80:80"
     volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
     depends_on:
       admin:
         condition: service_healthy
@@ -85,8 +89,8 @@ services:
     container_name: monad_dozzle
     restart: unless-stopped
 
-    ports:
-      - "9999:8080"
+    expose:
+      - "8080"
 
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
@@ -134,7 +138,7 @@ services:
 
   updater:
     image: ghcr.io/crosstalk-solutions/project-nomad-sidecar-updater:latest
-    pull_policy: always
+    pull_policy: missing
     container_name: monad_updater
     restart: unless-stopped
 
@@ -146,7 +150,7 @@ services:
 
   disk-collector:
     image: ghcr.io/crosstalk-solutions/project-nomad-disk-collector:latest
-    pull_policy: always
+    pull_policy: missing
     container_name: monad_disk_collector
     restart: unless-stopped
 

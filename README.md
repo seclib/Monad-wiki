@@ -159,10 +159,19 @@ The admin container includes project identity variables:
 
 ```yaml
 APP_AUTHOR=seclib
-PROJECT_NAME=monad
+PROJECT_NAME=MONAD
+PROJECT_REGION=Reunion
+PROJECT_TAGLINE=Optimisé pour La Réunion
+PROJECT_DESCRIPTION=Système local de gestion et de connaissance
+DEFAULT_LANGUAGE=fr
+APP_LOCALE=fr_FR
+DATE_FORMAT=DD/MM/YYYY
+TZ=Indian/Reunion
+LANG=fr_FR.UTF-8
+LC_ALL=fr_FR.UTF-8
 ```
 
-These values identify the local MONAD deployment without changing the service architecture.
+These values identify the local MONAD deployment, make the interface Réunion-first, and keep the service architecture unchanged.
 
 ## Stop, Restart, And Update
 

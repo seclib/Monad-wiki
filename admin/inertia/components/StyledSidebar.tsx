@@ -24,7 +24,7 @@ interface StyledSidebarProps {
 const StyledSidebar: React.FC<StyledSidebarProps> = ({ title, items }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [debugModalOpen, setDebugModalOpen] = useState(false)
-  const { appVersion } = usePage().props as unknown as UsePageProps
+  const { appVersion, projectTagline } = usePage().props as unknown as UsePageProps
 
   const currentPath = useMemo(() => {
     if (typeof window === 'undefined') return ''
@@ -79,7 +79,7 @@ const StyledSidebar: React.FC<StyledSidebarProps> = ({ title, items }) => {
                     className="flex flex-row items-center gap-x-3 text-desert-green text-sm font-semibold"
                   >
                     <IconArrowLeft aria-hidden="true" className="size-6 shrink-0" />
-                    Back to Home
+                    Retour à l'accueil
                   </Link>
                 </li>
               </ul>
@@ -87,13 +87,14 @@ const StyledSidebar: React.FC<StyledSidebarProps> = ({ title, items }) => {
           </ul>
         </nav>
         <div className="mb-4 flex flex-col items-center gap-1 text-sm text-text-secondary text-center">
-          <p>MONAD Command Center v{appVersion}</p>
+          <p>MONAD Centre de commande v{appVersion}</p>
+          {projectTagline && <p>{projectTagline}</p>}
           <button
             onClick={() => setDebugModalOpen(true)}
             className="text-gray-500 hover:text-desert-green inline-flex items-center gap-1 cursor-pointer"
           >
             <IconBug className="size-3.5" />
-            Debug Info
+            Diagnostic
           </button>
           <ThemeToggle />
         </div>

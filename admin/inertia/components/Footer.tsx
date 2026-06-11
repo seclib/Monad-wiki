@@ -6,14 +6,15 @@ import { IconBug } from '@tabler/icons-react'
 import DebugInfoModal from './DebugInfoModal'
 
 export default function Footer() {
-  const { appVersion } = usePage().props as unknown as UsePageProps
+  const { appVersion, projectTagline } = usePage().props as unknown as UsePageProps
   const [debugModalOpen, setDebugModalOpen] = useState(false)
 
   return (
     <footer>
       <div className="flex items-center justify-center gap-3 border-t border-border-subtle py-4">
         <p className="text-sm/6 text-text-secondary">
-          MONAD Command Center v{appVersion}
+          MONAD Centre de commande v{appVersion}
+          {projectTagline ? ` · ${projectTagline}` : ''}
         </p>
         <span className="text-gray-300">|</span>
         <button
@@ -21,7 +22,7 @@ export default function Footer() {
           className="text-sm/6 text-gray-500 hover:text-desert-green flex items-center gap-1 cursor-pointer"
         >
           <IconBug className="size-3.5" />
-          Debug Info
+          Diagnostic
         </button>
         <ThemeToggle />
       </div>

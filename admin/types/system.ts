@@ -24,6 +24,13 @@ export type SystemInformationResponse = {
 export type UsePageProps = {
   appVersion: string
   environment: string
+  projectName?: string
+  projectRegion?: string
+  projectTagline?: string
+  projectDescription?: string
+  defaultLanguage?: string
+  appLocale?: string
+  dateFormat?: string
 }
 
 export type LSBlockDevice = {
@@ -78,11 +85,10 @@ export type SystemUpdateStatus = {
   timestamp: string
 }
 
-
 export type CheckLatestVersionResult = {
-  success: boolean,
-  updateAvailable: boolean,
-  currentVersion: string,
-  latestVersion: string,
+  success: boolean
+  updateAvailable: boolean
+  currentVersion: string
+  latestVersion: string
   message?: string
 }

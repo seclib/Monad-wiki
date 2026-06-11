@@ -18,10 +18,10 @@ import { SERVICE_NAMES } from '../../constants/service_names'
 
 // Maps is a Core Capability (display_order: 4)
 const MAPS_ITEM = {
-  label: 'Maps',
+  label: 'Cartes',
   to: '/maps',
   target: '',
-  description: 'View offline maps',
+  description: 'Consulter les cartes hors ligne',
   icon: <IconMapRoute size={48} />,
   installed: true,
   displayOrder: 4,
@@ -31,41 +31,40 @@ const MAPS_ITEM = {
 // System items shown after all apps
 const SYSTEM_ITEMS = [
   {
-    label: 'Easy Setup',
+    label: 'Configuration rapide',
     to: '/easy-setup',
     target: '',
-    description:
-      'Not sure where to start? Use the setup wizard to quickly configure your MONAD!',
+    description: 'Configurez rapidement votre instance MONAD pour un usage local à La Réunion.',
     icon: <IconBolt size={48} />,
     installed: true,
     displayOrder: 50,
     poweredBy: null,
   },
   {
-    label: 'Install Apps',
+    label: 'Applications',
     to: '/settings/apps',
     target: '',
-    description: 'Not seeing your favorite app? Install it here!',
+    description: 'Installez et gérez les services disponibles.',
     icon: <IconPlus size={48} />,
     installed: true,
     displayOrder: 51,
     poweredBy: null,
   },
   {
-    label: 'Docs',
+    label: 'Documentation',
     to: '/docs/home',
     target: '',
-    description: 'Read MONAD manuals and guides',
+    description: 'Lire les guides et manuels MONAD',
     icon: <IconHelp size={48} />,
     installed: true,
     displayOrder: 52,
     poweredBy: null,
   },
   {
-    label: 'Settings',
+    label: 'Paramètres',
     to: '/settings/system',
     target: '',
-    description: 'Configure your MONAD settings',
+    description: 'Configurer les préférences MONAD',
     icon: <IconSettings size={48} />,
     installed: true,
     displayOrder: 53,
@@ -90,14 +89,16 @@ export default function Home(props: {
   }
 }) {
   const items: DashboardItem[] = []
-  const updateInfo = useUpdateAvailable();
+  const updateInfo = useUpdateAvailable()
   const { aiAssistantName } = usePage<{ aiAssistantName: string }>().props
 
   // Check if user has visited Easy Setup
   const { data: easySetupVisited } = useSystemSetting({
-    key: 'ui.hasVisitedEasySetup'
+    key: 'ui.hasVisitedEasySetup',
   })
-  const shouldHighlightEasySetup = easySetupVisited?.value ? String(easySetupVisited.value) !== 'true' : false
+  const shouldHighlightEasySetup = easySetupVisited?.value
+    ? String(easySetupVisited.value) !== 'true'
+    : false
 
   // Add installed services (non-dependency services only)
   props.system.services
@@ -105,7 +106,10 @@ export default function Home(props: {
     .forEach((service) => {
       items.push({
         // Inject custom AI Assistant name if this is the chat service
-        label: service.service_name === SERVICE_NAMES.OLLAMA && aiAssistantName ? aiAssistantName : (service.friendly_name || service.service_name),
+        label:
+          service.service_name === SERVICE_NAMES.OLLAMA && aiAssistantName
+            ? aiAssistantName
+            : service.friendly_name || service.service_name,
         to: service.ui_location ? getServiceLink(service.ui_location) : '#',
         target: '_blank',
         description:
@@ -133,28 +137,26 @@ export default function Home(props: {
 
   return (
     <AppLayout>
-      <Head title="Command Center" />
-      {
-        updateInfo?.updateAvailable && (
-          <div className='flex justify-center items-center p-4 w-full'>
-            <Alert
-              title="An update is available for MONAD!"
-              type="info-inverted"
-              variant="solid"
-              className="w-full"
-              buttonProps={{
-                variant: 'primary',
-                children: 'Go to Settings',
-                icon: 'IconSettings',
-                onClick: () => router.visit('/settings/update'),
-              }}
-            />
-          </div>
-        )
-      }
+      <Head title="Centre de commande" />
+      {updateInfo?.updateAvailable && (
+        <div className="flex justify-center items-center p-4 w-full">
+          <Alert
+            title="Une mise à jour est disponible pour MONAD"
+            type="info-inverted"
+            variant="solid"
+            className="w-full"
+            buttonProps={{
+              variant: 'primary',
+              children: 'Ouvrir les paramètres',
+              icon: 'IconSettings',
+              onClick: () => router.visit('/settings/update'),
+            }}
+          />
+        </div>
+      )}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
         {items.map((item) => {
-          const isEasySetup = item.label === 'Easy Setup'
+          const isEasySetup = item.to === '/easy-setup'
           const shouldHighlight = isEasySetup && shouldHighlightEasySetup
 
           const tileContent = (
@@ -166,13 +168,15 @@ export default function Home(props: {
                     style={{ animationDuration: '1.5s' }}
                   ></span>
                   <span className="relative inline-flex items-center rounded-full px-2.5 py-1 bg-desert-orange-light text-xs font-semibold text-white shadow-sm">
-                    Start here!
+                    Commencer ici
                   </span>
                 </span>
               )}
               <div className="flex items-center justify-center mb-2">{item.icon}</div>
               <h3 className="font-bold text-2xl">{item.label}</h3>
-              {item.poweredBy && <p className="text-sm opacity-80">Powered by {item.poweredBy}</p>}
+              {item.poweredBy && (
+                <p className="text-sm opacity-80">Propulsé par {item.poweredBy}</p>
+              )}
               <p className="xl:text-lg mt-2">{item.description}</p>
             </div>
           )
