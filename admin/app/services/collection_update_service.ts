@@ -10,7 +10,7 @@ import type {
   ResourceUpdateInfo,
   ContentUpdateCheckResult,
 } from '../../types/collections.js'
-import { NOMAD_API_DEFAULT_BASE_URL } from '../../constants/misc.js'
+import { MONAD_API_DEFAULT_BASE_URL } from '../../constants/misc.js'
 
 const MAP_STORAGE_PATH = '/storage/maps'
 
@@ -19,12 +19,12 @@ const PMTILES_MIME_TYPES = ['application/vnd.pmtiles', 'application/octet-stream
 
 export class CollectionUpdateService {
   async checkForUpdates(): Promise<ContentUpdateCheckResult> {
-    const nomadAPIURL = env.get('NOMAD_API_URL') || NOMAD_API_DEFAULT_BASE_URL
-    if (!nomadAPIURL) {
+    const monadAPIURL = env.get('MONAD_API_URL') || MONAD_API_DEFAULT_BASE_URL
+    if (!monadAPIURL) {
       return {
         updates: [],
         checked_at: new Date().toISOString(),
-        error: 'Nomad API is not configured. Set the NOMAD_API_URL environment variable.',
+        error: 'Monad API is not configured. Set the MONAD_API_URL environment variable.',
       }
     }
 
@@ -45,7 +45,7 @@ export class CollectionUpdateService {
     }
 
     try {
-      const response = await axios.post<ResourceUpdateInfo[]>(`${nomadAPIURL}/api/v1/resources/check-updates`, requestBody, {
+      const response = await axios.post<ResourceUpdateInfo[]>(`${monadAPIURL}/api/v1/resources/check-updates`, requestBody, {
         timeout: 15000,
       })
 
@@ -62,7 +62,7 @@ export class CollectionUpdateService {
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {
         logger.error(
-          `[CollectionUpdateService] Nomad API returned ${error.response.status}: ${JSON.stringify(error.response.data)}`
+          `[CollectionUpdateService] Monad API returned ${error.response.status}: ${JSON.stringify(error.response.data)}`
         )
         return {
           updates: [],
@@ -71,7 +71,7 @@ export class CollectionUpdateService {
         }
       }
       const message =
-        error instanceof Error ? error.message : 'Unknown error contacting Nomad API'
+        error instanceof Error ? error.message : 'Unknown error contacting Monad API'
       logger.error(`[CollectionUpdateService] Failed to check for updates: ${message}`)
       return {
         updates: [],

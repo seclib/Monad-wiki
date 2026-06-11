@@ -7,7 +7,7 @@ import ipaddr from 'ipaddr.js'
  * or link-local/metadata endpoints (e.g. cloud instance metadata at 169.254.x.x).
  *
  * RFC1918 private ranges (10.x, 172.16-31.x, 192.168.x) are intentionally
- * ALLOWED because NOMAD is a LAN appliance and users may host content
+ * ALLOWED because MONAD is a LAN appliance and users may host content
  * mirrors on their local network.
  *
  * Throws an error if the URL is a loopback or link-local address.
@@ -36,7 +36,7 @@ export function assertNotPrivateUrl(urlString: string): void {
 }
 
 /**
- * Narrower SSRF guard for "remote service" URLs the user points NOMAD at
+ * Narrower SSRF guard for "remote service" URLs the user points MONAD at
  * (e.g. an OpenAI-compatible endpoint like LM Studio, llama.cpp, vLLM, or a
  * sibling Ollama container). Unlike `assertNotPrivateUrl`, this intentionally
  * ALLOWS loopback, link-local-ish, and RFC1918 hosts because the legitimate

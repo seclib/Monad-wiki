@@ -26,10 +26,10 @@ export class DownloadModelJob {
 
   /**
    * Redis key used to signal cancellation across processes. Uses a `model-cancel` prefix
-   * so it cannot collide with content download cancel signals (`nomad:download:cancel:*`).
+   * so it cannot collide with content download cancel signals (`monad:download:cancel:*`).
    */
   static cancelKey(jobId: string): string {
-    return `nomad:download:model-cancel:${jobId}`
+    return `monad:download:model-cancel:${jobId}`
   }
 
   /** Signal cancellation via Redis so the worker process can pick it up on its next poll tick */

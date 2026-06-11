@@ -19,7 +19,7 @@ import { KIWIX_LIBRARY_CMD } from '../../constants/kiwix.js'
 export class DockerService {
   public docker: Docker
   private activeInstallations: Set<string> = new Set()
-  public static NOMAD_NETWORK = 'project-nomad_default'
+  public static MONAD_NETWORK = 'monad_default'
 
   private _servicesStatusCache: { data: { service_name: string; status: string }[]; expiresAt: number } | null = null
   private _servicesStatusInflight: Promise<{ service_name: string; status: string }[]> | null = null
@@ -119,7 +119,7 @@ export class DockerService {
   }
 
   /**
-   * Fetches the status of all Docker containers related to Nomad services. (those prefixed with 'nomad_')
+   * Fetches the status of all Docker containers related to Monad services. (those prefixed with 'monad_')
    * Results are cached for 5 seconds and concurrent callers share a single in-flight request,
    * preventing Docker socket congestion during rapid page navigation.
    */
@@ -156,7 +156,7 @@ export class DockerService {
       const containerMap = new Map<string, Docker.ContainerInfo>()
       containers.forEach((container) => {
         const name = container.Names[0]?.replace('/', '')
-        if (name && name.startsWith('nomad_')) {
+        if (name && name.startsWith('monad_')) {
           containerMap.set(name, container)
         }
       })
@@ -618,8 +618,8 @@ export class DockerService {
         name: service.service_name,
         Labels: {
           ...(containerConfig?.Labels ?? {}),
-          'com.docker.compose.project': 'project-nomad-managed',
-          'io.project-nomad.managed': 'true',
+          'com.docker.compose.project': 'monad-managed',
+          'io.monad.managed': 'true',
         },
         ...(containerConfig?.User && { User: containerConfig.User }),
         HostConfig: gpuHostConfig,
@@ -627,11 +627,11 @@ export class DockerService {
         ...(containerConfig?.ExposedPorts && { ExposedPorts: containerConfig.ExposedPorts }),
         Env: [...(containerConfig?.Env ?? []), ...ollamaEnv],
         ...(service.container_command ? { Cmd: service.container_command.split(' ') } : {}),
-        // Ensure container is attached to the Nomad docker network in production
+        // Ensure container is attached to the Monad docker network in production
         ...(process.env.NODE_ENV === 'production' && {
           NetworkingConfig: {
             EndpointsConfig: {
-              [DockerService.NOMAD_NETWORK]: {},
+              [DockerService.MONAD_NETWORK]: {},
             },
           },
         }),
@@ -657,19 +657,19 @@ export class DockerService {
       // Remove from active installs tracking
       this.activeInstallations.delete(service.service_name)
 
-      // If Ollama was just installed, trigger Nomad docs discovery and embedding
+      // If Ollama was just installed, trigger Monad docs discovery and embedding
       if (service.service_name === SERVICE_NAMES.OLLAMA) {
         logger.info('[DockerService] Ollama installation complete. Default behavior is to not enable chat suggestions.')
         await KVStore.setValue('chat.suggestionsEnabled', false)
 
-        logger.info('[DockerService] Ollama installation complete. Triggering Nomad docs discovery...')
+        logger.info('[DockerService] Ollama installation complete. Triggering Monad docs discovery...')
         
         // Need to use dynamic imports here to avoid circular dependency
         const ollamaService = new (await import('./ollama_service.js')).OllamaService()
         const ragService = new (await import('./rag_service.js')).RagService(this, ollamaService)
 
-        ragService.discoverNomadDocs().catch((error) => {
-          logger.error('[DockerService] Failed to discover Nomad docs:', error)
+        ragService.discoverMonadDocs().catch((error) => {
+          logger.error('[DockerService] Failed to discover Monad docs:', error)
         })
       }
 
@@ -729,7 +729,7 @@ export class DockerService {
      * We'll download the lightweight mini Wikipedia Top 100 zim file for this purpose.
      **/
     const WIKIPEDIA_ZIM_URL =
-      'https://github.com/Crosstalk-Solutions/project-nomad/raw/refs/heads/main/install/wikipedia_en_100_mini_2026-01.zim'
+      'https://github.com/seclib/monad/raw/refs/heads/main/install/wikipedia_en_100_mini_2026-01.zim'
     const filename = 'wikipedia_en_100_mini_2026-01.zim'
     const filepath = join(process.cwd(), ZIM_STORAGE_PATH, filename)
     logger.info(`[DockerService] Kiwix Serve pre-install: Downloading ZIM file to ${filepath}`)
@@ -883,7 +883,7 @@ export class DockerService {
         ...(process.env.NODE_ENV === 'production' && {
           NetworkingConfig: {
             EndpointsConfig: {
-              [DockerService.NOMAD_NETWORK]: {},
+              [DockerService.MONAD_NETWORK]: {},
             },
           },
         }),
@@ -908,7 +908,7 @@ export class DockerService {
   /**
    * Detect GPU type and toolkit availability.
    * Primary: Check Docker runtimes via docker.info() (works from inside containers).
-   * Secondary: Read /app/storage/.nomad-gpu-type written by install_nomad.sh — needed
+   * Secondary: Read /app/storage/.monad-gpu-type written by install_monad.sh — needed
    *   for AMD detection because lspci isn't available inside the admin container and
    *   AMD has no Docker runtime registration to query.
    * Fallback: lspci for host-based installs.
@@ -928,10 +928,10 @@ export class DockerService {
         logger.warn(`[DockerService] Could not query Docker info for GPU runtimes: ${error.message}`)
       }
 
-      // Secondary: install_nomad.sh writes the host-detected GPU type to a marker file in
+      // Secondary: install_monad.sh writes the host-detected GPU type to a marker file in
       // the storage volume so the admin container (which lacks lspci) can read it.
       try {
-        const marker = (await readFile('/app/storage/.nomad-gpu-type', 'utf8')).trim()
+        const marker = (await readFile('/app/storage/.monad-gpu-type', 'utf8')).trim()
         if (marker === 'nvidia') {
           // Hardware present but Docker doesn't have nvidia runtime → toolkit missing
           logger.warn('[DockerService] NVIDIA GPU recorded in marker file but NVIDIA Container Toolkit is not installed')
@@ -1018,7 +1018,7 @@ export class DockerService {
    *
    * Resolution order:
    *   1. KV `ai.amdHsaOverride` — manual user override; accepts 'none' (disable) or a semver-style value.
-   *   2. Marker file `/app/storage/.nomad-amd-gfx` written by install_nomad.sh.
+   *   2. Marker file `/app/storage/.monad-amd-gfx` written by install_monad.sh.
    *   3. Default: '11.0.0' — preserves prior behavior so existing iGPU users don't regress on
    *      upgrade. Discrete-card users on existing installs can opt out via the KV.
    *
@@ -1040,13 +1040,13 @@ export class DockerService {
     }
 
     try {
-      const gfx = (await readFile('/app/storage/.nomad-amd-gfx', 'utf8')).trim()
+      const gfx = (await readFile('/app/storage/.monad-amd-gfx', 'utf8')).trim()
       const mapped = this._mapGfxToHsaOverride(gfx)
       logger.info(`[DockerService] AMD gfx marker '${gfx}' → HSA override ${mapped ?? 'none'}`)
       return mapped
     } catch {
       // Marker absent — most likely an existing install upgraded without re-running
-      // install_nomad.sh. Fall through to the default.
+      // install_monad.sh. Fall through to the default.
     }
 
     logger.info('[DockerService] No AMD gfx marker; defaulting HSA override to 11.0.0 for backward compatibility')

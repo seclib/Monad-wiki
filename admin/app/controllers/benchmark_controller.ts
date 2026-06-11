@@ -49,7 +49,7 @@ export default class BenchmarkController {
         return response.send({
           success: true,
           benchmark_id: result.benchmark_id,
-          nomad_score: result.nomad_score,
+          monad_score: result.monad_score,
           result,
         })
       } catch (error) {

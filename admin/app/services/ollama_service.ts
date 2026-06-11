@@ -2,7 +2,7 @@ import { inject } from '@adonisjs/core'
 import OpenAI from 'openai'
 import type { ChatCompletionChunk, ChatCompletionMessageParam } from 'openai/resources/chat/completions.js'
 import type { Stream } from 'openai/streaming.js'
-import { NomadOllamaModel } from '../../types/ollama.js'
+import { MonadOllamaModel } from '../../types/ollama.js'
 import { EMBEDDING_MODEL_NAME, FALLBACK_RECOMMENDED_OLLAMA_MODELS } from '../../constants/ollama.js'
 import fs from 'node:fs/promises'
 import path from 'node:path'
@@ -14,27 +14,27 @@ import transmit from '@adonisjs/transmit/services/main'
 import Fuse, { IFuseOptions } from 'fuse.js'
 import { BROADCAST_CHANNELS } from '../../constants/broadcast.js'
 import env from '#start/env'
-import { NOMAD_API_DEFAULT_BASE_URL } from '../../constants/misc.js'
+import { MONAD_API_DEFAULT_BASE_URL } from '../../constants/misc.js'
 import KVStore from '#models/kv_store'
 
-const NOMAD_MODELS_API_PATH = '/api/v1/ollama/models'
+const MONAD_MODELS_API_PATH = '/api/v1/ollama/models'
 const MODELS_CACHE_FILE = path.join(process.cwd(), 'storage', 'ollama-models-cache.json')
 const CACHE_MAX_AGE_MS = 24 * 60 * 60 * 1000 // 24 hours
 
-export type NomadInstalledModel = {
+export type MonadInstalledModel = {
   name: string
   size: number
   digest?: string
   details?: Record<string, any>
 }
 
-export type NomadChatResponse = {
+export type MonadChatResponse = {
   message: { content: string; thinking?: string }
   done: boolean
   model: string
 }
 
-export type NomadChatStreamChunk = {
+export type MonadChatStreamChunk = {
   message: { content: string; thinking?: string }
   done: boolean
 }
@@ -75,7 +75,7 @@ export class OllamaService {
         }
 
         this.openai = new OpenAI({
-          apiKey: 'nomad', // Required by SDK; not validated by Ollama/LM Studio/llama.cpp
+          apiKey: 'monad', // Required by SDK; not validated by Ollama/LM Studio/llama.cpp
           baseURL: `${this.baseUrl}/v1`,
         })
       })()
@@ -315,7 +315,7 @@ export class OllamaService {
     }
   }
 
-  public async chat(chatRequest: ChatInput): Promise<NomadChatResponse> {
+  public async chat(chatRequest: ChatInput): Promise<MonadChatResponse> {
     await this._ensureDependencies()
     if (!this.openai) {
       throw new Error('AI client is not initialized.')
@@ -346,7 +346,7 @@ export class OllamaService {
     }
   }
 
-  public async chatStream(chatRequest: ChatInput): Promise<AsyncIterable<NomadChatStreamChunk>> {
+  public async chatStream(chatRequest: ChatInput): Promise<AsyncIterable<MonadChatStreamChunk>> {
     await this._ensureDependencies()
     if (!this.openai) {
       throw new Error('AI client is not initialized.')
@@ -374,7 +374,7 @@ export class OllamaService {
       return 0
     }
 
-    async function* normalize(): AsyncGenerator<NomadChatStreamChunk> {
+    async function* normalize(): AsyncGenerator<MonadChatStreamChunk> {
       // Stateful parser for <think>...</think> tags that may be split across chunks.
       // Ollama provides thinking natively via delta.thinking; OpenAI-compatible backends
       // (LM Studio, llama.cpp, etc.) embed them inline in delta.content.
@@ -661,7 +661,7 @@ export class OllamaService {
     return toUnload
   }
 
-  public async getModels(includeEmbeddings = false): Promise<NomadInstalledModel[]> {
+  public async getModels(includeEmbeddings = false): Promise<MonadInstalledModel[]> {
     await this._ensureDependencies()
     if (!this.baseUrl) {
       throw new Error('AI service is not initialized.')
@@ -675,7 +675,7 @@ export class OllamaService {
         throw new Error('Not an Ollama-compatible /api/tags response')
       }
       this.isOllamaNative = true
-      const models: NomadInstalledModel[] = response.data.models
+      const models: MonadInstalledModel[] = response.data.models
       if (includeEmbeddings) return models
       return models.filter((m) => !m.name.includes('embed'))
     } catch {
@@ -684,7 +684,7 @@ export class OllamaService {
       logger.info('[OllamaService] /api/tags unavailable, falling back to /v1/models')
       try {
         const modelList = await this.openai!.models.list()
-        const models: NomadInstalledModel[] = modelList.data.map((m) => ({ name: m.id, size: 0 }))
+        const models: MonadInstalledModel[] = modelList.data.map((m) => ({ name: m.id, size: 0 }))
         if (includeEmbeddings) return models
         return models.filter((m) => !m.name.includes('embed'))
       } catch (err) {
@@ -715,7 +715,7 @@ export class OllamaService {
       query: null,
       limit: 15,
     }
-  ): Promise<{ models: NomadOllamaModel[]; hasMore: boolean } | null> {
+  ): Promise<{ models: MonadOllamaModel[]; hasMore: boolean } | null> {
     try {
       const models = await this.retrieveAndRefreshModels(sort, force)
       if (!models) {
@@ -769,7 +769,7 @@ export class OllamaService {
   private async retrieveAndRefreshModels(
     sort?: 'pulls' | 'name',
     force?: boolean
-  ): Promise<NomadOllamaModel[] | null> {
+  ): Promise<MonadOllamaModel[] | null> {
     try {
       if (!force) {
         const cachedModels = await this.readModelsFromCache()
@@ -783,8 +783,8 @@ export class OllamaService {
 
       logger.info('[OllamaService] Fetching fresh available models from API')
 
-      const baseUrl = env.get('NOMAD_API_URL') || NOMAD_API_DEFAULT_BASE_URL
-      const fullUrl = new URL(NOMAD_MODELS_API_PATH, baseUrl).toString()
+      const baseUrl = env.get('MONAD_API_URL') || MONAD_API_DEFAULT_BASE_URL
+      const fullUrl = new URL(MONAD_MODELS_API_PATH, baseUrl).toString()
 
       const response = await axios.get(fullUrl)
       if (!response.data || !Array.isArray(response.data.models)) {
@@ -794,7 +794,7 @@ export class OllamaService {
         return null
       }
 
-      const rawModels = response.data.models as NomadOllamaModel[]
+      const rawModels = response.data.models as MonadOllamaModel[]
 
       const noCloud = rawModels
         .map((model) => ({
@@ -807,13 +807,13 @@ export class OllamaService {
       return this.sortModels(noCloud, sort)
     } catch (error) {
       logger.error(
-        `[OllamaService] Failed to retrieve models from Nomad API: ${error instanceof Error ? error.message : error}`
+        `[OllamaService] Failed to retrieve models from Monad API: ${error instanceof Error ? error.message : error}`
       )
       return null
     }
   }
 
-  private async readModelsFromCache(): Promise<NomadOllamaModel[] | null> {
+  private async readModelsFromCache(): Promise<MonadOllamaModel[] | null> {
     try {
       const stats = await fs.stat(MODELS_CACHE_FILE)
       const cacheAge = Date.now() - stats.mtimeMs
@@ -824,7 +824,7 @@ export class OllamaService {
       }
 
       const cacheData = await fs.readFile(MODELS_CACHE_FILE, 'utf-8')
-      const models = JSON.parse(cacheData) as NomadOllamaModel[]
+      const models = JSON.parse(cacheData) as MonadOllamaModel[]
 
       if (!Array.isArray(models)) {
         logger.warn('[OllamaService] Invalid cache format, will fetch fresh data')
@@ -842,7 +842,7 @@ export class OllamaService {
     }
   }
 
-  private async writeModelsToCache(models: NomadOllamaModel[]): Promise<void> {
+  private async writeModelsToCache(models: MonadOllamaModel[]): Promise<void> {
     try {
       await fs.mkdir(path.dirname(MODELS_CACHE_FILE), { recursive: true })
       await fs.writeFile(MODELS_CACHE_FILE, JSON.stringify(models, null, 2), 'utf-8')
@@ -854,7 +854,7 @@ export class OllamaService {
     }
   }
 
-  private sortModels(models: NomadOllamaModel[], sort?: 'pulls' | 'name'): NomadOllamaModel[] {
+  private sortModels(models: MonadOllamaModel[], sort?: 'pulls' | 'name'): MonadOllamaModel[] {
     if (sort === 'pulls') {
       models.sort((a, b) => {
         const parsePulls = (pulls: string) => {
@@ -923,8 +923,8 @@ export class OllamaService {
     logger.info(`[OllamaService] Download progress for model "${model}": ${percent}%`)
   }
 
-  private fuseSearchModels(models: NomadOllamaModel[], query: string): NomadOllamaModel[] {
-    const options: IFuseOptions<NomadOllamaModel> = {
+  private fuseSearchModels(models: MonadOllamaModel[], query: string): MonadOllamaModel[] {
+    const options: IFuseOptions<MonadOllamaModel> = {
       ignoreDiacritics: true,
       keys: ['name', 'description', 'tags.name'],
       threshold: 0.3,

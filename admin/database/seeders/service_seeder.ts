@@ -7,9 +7,9 @@ import { KIWIX_LIBRARY_CMD } from '../../constants/kiwix.js'
 
 export default class ServiceSeeder extends BaseSeeder {
   // Use environment variable with fallback to production default
-  private static NOMAD_STORAGE_ABS_PATH = env.get(
-    'NOMAD_STORAGE_PATH',
-    '/opt/project-nomad/storage'
+  private static MONAD_STORAGE_ABS_PATH = env.get(
+    'MONAD_STORAGE_PATH',
+    '/opt/monad/storage'
   )
   private static DEFAULT_SERVICES: Omit<
     ModelAttributes<Service>,
@@ -29,7 +29,7 @@ export default class ServiceSeeder extends BaseSeeder {
       container_config: JSON.stringify({
         HostConfig: {
           RestartPolicy: { Name: 'unless-stopped' },
-          Binds: [`${ServiceSeeder.NOMAD_STORAGE_ABS_PATH}/zim:/data`],
+          Binds: [`${ServiceSeeder.MONAD_STORAGE_ABS_PATH}/zim:/data`],
           PortBindings: { '8080/tcp': [{ HostPort: '8090' }] },
         },
         ExposedPorts: { '8080/tcp': {} },
@@ -53,11 +53,11 @@ export default class ServiceSeeder extends BaseSeeder {
       container_config: JSON.stringify({
         HostConfig: {
           RestartPolicy: { Name: 'unless-stopped' },
-          Binds: [`${ServiceSeeder.NOMAD_STORAGE_ABS_PATH}/qdrant:/qdrant/storage`],
+          Binds: [`${ServiceSeeder.MONAD_STORAGE_ABS_PATH}/qdrant:/qdrant/storage`],
           PortBindings: { '6333/tcp': [{ HostPort: '6333' }], '6334/tcp': [{ HostPort: '6334' }] },
         },
         ExposedPorts: { '6333/tcp': {}, '6334/tcp': {} },
-        // Disable Qdrant's anonymous telemetry to telemetry.qdrant.io. NOMAD is offline-first
+        // Disable Qdrant's anonymous telemetry to telemetry.qdrant.io. MONAD is offline-first
         // and ships with zero telemetry by default — Qdrant's upstream default of enabled
         // telemetry doesn't match that posture.
         Env: ['QDRANT__TELEMETRY_DISABLED=true'],
@@ -81,7 +81,7 @@ export default class ServiceSeeder extends BaseSeeder {
       container_config: JSON.stringify({
         HostConfig: {
           RestartPolicy: { Name: 'unless-stopped' },
-          Binds: [`${ServiceSeeder.NOMAD_STORAGE_ABS_PATH}/ollama:/root/.ollama`],
+          Binds: [`${ServiceSeeder.MONAD_STORAGE_ABS_PATH}/ollama:/root/.ollama`],
           PortBindings: { '11434/tcp': [{ HostPort: '11434' }] },
         },
         ExposedPorts: { '11434/tcp': {} },
@@ -129,7 +129,7 @@ export default class ServiceSeeder extends BaseSeeder {
         HostConfig: {
           RestartPolicy: { Name: 'unless-stopped' },
           PortBindings: { '8080/tcp': [{ HostPort: '8200' }] },
-          Binds: [`${ServiceSeeder.NOMAD_STORAGE_ABS_PATH}/flatnotes:/data`],
+          Binds: [`${ServiceSeeder.MONAD_STORAGE_ABS_PATH}/flatnotes:/data`],
         },
         ExposedPorts: { '8080/tcp': {} },
         Env: ['FLATNOTES_AUTH_TYPE=none'],
@@ -154,7 +154,7 @@ export default class ServiceSeeder extends BaseSeeder {
         HostConfig: {
           RestartPolicy: { Name: 'unless-stopped' },
           PortBindings: { '8080/tcp': [{ HostPort: '8300' }] },
-          Binds: [`${ServiceSeeder.NOMAD_STORAGE_ABS_PATH}/kolibri:/root/.kolibri`],
+          Binds: [`${ServiceSeeder.MONAD_STORAGE_ABS_PATH}/kolibri:/root/.kolibri`],
         },
         ExposedPorts: { '8080/tcp': {} },
       }),

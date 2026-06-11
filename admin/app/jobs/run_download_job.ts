@@ -26,7 +26,7 @@ export class RunDownloadJob {
 
   /** Redis key used to signal cancellation across processes */
   static cancelKey(jobId: string): string {
-    return `nomad:download:cancel:${jobId}`
+    return `monad:download:cancel:${jobId}`
   }
 
   /** Signal cancellation via Redis so the worker process can pick it up */
@@ -145,7 +145,7 @@ export class RunDownloadJob {
               await zimService.downloadRemoteSuccessCallback([url], true)
 
               // Only dispatch embedding job if AI Assistant (Ollama) is installed
-              const ollamaUrl = await dockerService.getServiceURL('nomad_ollama')
+              const ollamaUrl = await dockerService.getServiceURL('monad_ollama')
               if (ollamaUrl) {
                 // Respect the global ingest policy. Under Manual, record the file
                 // as pending_decision so the KB panel surfaces the per-file Index

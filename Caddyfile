@@ -1,0 +1,3 @@
+http://monad.local {
+	reverse_proxy admin:8050
+}

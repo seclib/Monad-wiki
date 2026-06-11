@@ -226,7 +226,7 @@ export default class OllamaController {
       return response.status(404).send({ success: false, message: 'Ollama service record not found.' })
     }
 
-    // Clear path: null or empty URL removes remote config. If a local nomad_ollama container
+    // Clear path: null or empty URL removes remote config. If a local monad_ollama container
     // still exists (user had previously installed AI Assistant locally), restart it and keep
     // the service marked installed. Otherwise fall back to uninstalled.
     if (!remoteUrl || remoteUrl.trim() === '') {
@@ -276,7 +276,7 @@ export default class OllamaController {
     ollamaService.installation_status = 'idle'
     await ollamaService.save()
 
-    // Stop the local nomad_ollama container (if running) so it doesn't compete with the
+    // Stop the local monad_ollama container (if running) so it doesn't compete with the
     // remote host for GPU / port 11434. Preserves the container and its models volume.
     await this._stopLocalOllamaContainer()
 
@@ -290,8 +290,8 @@ export default class OllamaController {
 
     // Mirror post-install side effects: disable suggestions, trigger docs discovery
     await KVStore.setValue('chat.suggestionsEnabled', false)
-    this.ragService.discoverNomadDocs().catch((error) => {
-      logger.error('[OllamaController] Failed to discover Nomad docs:', error)
+    this.ragService.discoverMonadDocs().catch((error) => {
+      logger.error('[OllamaController] Failed to discover Monad docs:', error)
     })
 
     return { success: true, message: 'Remote Ollama configured.' }
@@ -308,11 +308,11 @@ export default class OllamaController {
       }
       await this.dockerService.docker.getContainer(ollamaContainer.Id).stop()
       this.dockerService.invalidateServicesStatusCache()
-      logger.info('[OllamaController] Stopped local nomad_ollama (remote Ollama configured)')
+      logger.info('[OllamaController] Stopped local monad_ollama (remote Ollama configured)')
     } catch (error: any) {
       logger.error(
         { err: error },
-        '[OllamaController] Failed to stop local nomad_ollama; remote Ollama is still active'
+        '[OllamaController] Failed to stop local monad_ollama; remote Ollama is still active'
       )
     }
   }
@@ -329,13 +329,13 @@ export default class OllamaController {
       if (ollamaContainer.State !== 'running') {
         await this.dockerService.docker.getContainer(ollamaContainer.Id).start()
         this.dockerService.invalidateServicesStatusCache()
-        logger.info('[OllamaController] Started local nomad_ollama (remote Ollama cleared)')
+        logger.info('[OllamaController] Started local monad_ollama (remote Ollama cleared)')
       }
       return true
     } catch (error: any) {
       logger.error(
         { err: error },
-        '[OllamaController] Failed to start local nomad_ollama on remote clear'
+        '[OllamaController] Failed to start local monad_ollama on remote clear'
       )
       return false
     }

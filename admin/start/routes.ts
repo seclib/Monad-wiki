@@ -19,6 +19,7 @@ import SettingsController from '#controllers/settings_controller'
 import SystemController from '#controllers/system_controller'
 import CollectionUpdatesController from '#controllers/collection_updates_controller'
 import ZimController from '#controllers/zim_controller'
+import WikiIntelligenceController from '#controllers/wiki_intelligence_controller'
 import router from '@adonisjs/core/services/router'
 import transmit from '@adonisjs/transmit/services/main'
 
@@ -137,6 +138,17 @@ router
   .prefix('/api/chat/sessions')
 
 router.get('/api/chat/suggestions', [ChatsController, 'suggestions'])
+
+router.post('/search/semantic', [WikiIntelligenceController, 'semanticSearch'])
+router.post('/wiki/ask', [WikiIntelligenceController, 'ask'])
+router.post('/wiki/summarize', [WikiIntelligenceController, 'summarize'])
+router.post('/wiki/related', [WikiIntelligenceController, 'related'])
+router.post('/wiki/tags', [WikiIntelligenceController, 'tags'])
+router.post('/api/search/semantic', [WikiIntelligenceController, 'semanticSearch'])
+router.post('/api/wiki/ask', [WikiIntelligenceController, 'ask'])
+router.post('/api/wiki/summarize', [WikiIntelligenceController, 'summarize'])
+router.post('/api/wiki/related', [WikiIntelligenceController, 'related'])
+router.post('/api/wiki/tags', [WikiIntelligenceController, 'tags'])
 
 router
   .group(() => {

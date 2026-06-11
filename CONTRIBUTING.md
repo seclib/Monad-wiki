@@ -1,8 +1,8 @@
-# Contributing to Project N.O.M.A.D.
+# Contributing to MONAD
 
-Thank you for your interest in contributing to Project N.O.M.A.D.! Community contributions are what keep this project growing and improving. Please read this guide fully before getting started — it will save you (and the maintainers) a lot of time.
+Thank you for your interest in contributing to MONAD! Community contributions are what keep this project growing and improving. Please read this guide fully before getting started — it will save you (and the maintainers) a lot of time.
 
-> **Note:** Acceptance of contributions is not guaranteed. All pull requests are evaluated based on quality, relevance, and alignment with the project's goals. The maintainers of Project N.O.M.A.D. ("Nomad") reserve the right accept, deny, or modify any pull request at their sole discretion.
+> **Note:** Acceptance of contributions is not guaranteed. All pull requests are evaluated based on quality, relevance, and alignment with the project's goals. The maintainers of MONAD ("Monad") reserve the right accept, deny, or modify any pull request at their sole discretion.
 
 ---
 
@@ -22,7 +22,7 @@ Thank you for your interest in contributing to Project N.O.M.A.D.! Community con
 
 ## Code of Conduct
 
-Please read and review our full [Code of Conduct](https://github.com/Crosstalk-Solutions/project-nomad/blob/main/CODE_OF_CONDUCT.md) before contributing. In short: please be respectful and considerate in all interactions with maintainers and other contributors.
+Please read and review our full [Code of Conduct](https://github.com/seclib/monad/blob/main/CODE_OF_CONDUCT.md) before contributing. In short: please be respectful and considerate in all interactions with maintainers and other contributors.
 
 We are committed to providing a welcoming environment for everyone. Disrespectful or abusive behavior will not be tolerated. 
 
@@ -48,7 +48,7 @@ When opening an issue:
 ---
 
 ## Getting Started with Contributing
-**Please note**: this is the Getting Started guide for developing and contributing to Nomad, NOT [installing Nomad](https://github.com/Crosstalk-Solutions/project-nomad/blob/main/README.md) for regular use! 
+**Please note**: this is the Getting Started guide for developing and contributing to Monad, NOT [installing Monad](https://github.com/seclib/monad/blob/main/README.md) for regular use! 
 
 ### Prerequisites
 
@@ -63,16 +63,16 @@ When opening an issue:
 1. Click **Fork** at the top right of this repository
 2. Clone your fork locally:
    ```bash
-   git clone https://github.com/YOUR_USERNAME/project-nomad.git
-   cd project-nomad
+   git clone https://github.com/YOUR_USERNAME/monad.git
+   cd monad
    ```
 3. Add the upstream remote so you can stay in sync:
    ```bash
-   git remote add upstream https://github.com/Crosstalk-Solutions/project-nomad.git
+   git remote add upstream https://github.com/seclib/monad.git
    ```
 
 ### Avoid Installing a Release Version Locally
-Because Nomad relies heavily on Docker, we actually recommend against installing a release version of the project on the same local machine where you are developing. This can lead to conflicts with ports, volumes, and other resources. Instead, you can run your development version in a separate Docker environment while keeping your local machine clean. It certainly __can__ be done, but it adds complexity to your setup and workflow. If you choose to install a release version locally, please ensure you have a clear strategy for managing potential conflicts and resource usage.
+Because Monad relies heavily on Docker, we actually recommend against installing a release version of the project on the same local machine where you are developing. This can lead to conflicts with ports, volumes, and other resources. Instead, you can run your development version in a separate Docker environment while keeping your local machine clean. It certainly __can__ be done, but it adds complexity to your setup and workflow. If you choose to install a release version locally, please ensure you have a clear strategy for managing potential conflicts and resource usage.
 
 ---
 
@@ -92,7 +92,7 @@ Because Nomad relies heavily on Docker, we actually recommend against installing
    git checkout -b feature/add-new-tool
    ```
 
-3. **Make your changes.** Follow existing code style and conventions. Test your changes locally against a running N.O.M.A.D. instance before submitting.
+3. **Make your changes.** Follow existing code style and conventions. Test your changes locally against a running MONAD instance before submitting.
 
 4. **Add release notes** (see [Release Notes](#release-notes) below).
 
@@ -143,7 +143,7 @@ If your PR is merged in, the maintainers will update the release notes with a su
 
 ## Versioning
 
-This project uses [Semantic Versioning](https://semver.org/). Versions are managed in the root `package.json` and updated automatically by `semantic-release`. The `project-nomad` Docker image uses this version. The `admin/package.json` version stays at `0.0.0` and should not be changed manually.
+This project uses [Semantic Versioning](https://semver.org/). Versions are managed in the root `package.json` and updated automatically by `semantic-release`. The `monad` Docker image uses this version. The `admin/package.json` version stays at `0.0.0` and should not be changed manually.
 
 ---
 
@@ -166,10 +166,10 @@ This project uses [Semantic Versioning](https://semver.org/). Versions are manag
 
 Have questions or want to discuss ideas before opening an issue? Join the community:
 
-- **Discord:** [Join the Crosstalk Solutions server](https://discord.com/invite/crosstalksolutions) — the best place to get help, share your builds, and talk with other N.O.M.A.D. users
+- **Discord:** [Join the Crosstalk Solutions server](https://discord.com/invite/crosstalksolutions) — the best place to get help, share your builds, and talk with other MONAD users
 - **Website:** [www.projectnomad.us](https://www.projectnomad.us)
 - **Benchmark Leaderboard:** [benchmark.projectnomad.us](https://benchmark.projectnomad.us)
 
 ---
 
-*Project N.O.M.A.D. is licensed under the [Apache License 2.0](LICENSE).*
+*MONAD is licensed under the [Apache License 2.0](LICENSE).*

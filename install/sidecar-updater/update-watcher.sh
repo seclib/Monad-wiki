@@ -1,13 +1,13 @@
 #!/bin/bash
 
-# Project N.O.M.A.D. Update Sidecar - Polls for update requests and executes them
+# MONAD Update Sidecar - Polls for update requests and executes them
 
 SHARED_DIR="/shared"
 REQUEST_FILE="${SHARED_DIR}/update-request"
 STATUS_FILE="${SHARED_DIR}/update-status"
 LOG_FILE="${SHARED_DIR}/update-log"
-COMPOSE_FILE="/opt/project-nomad/compose.yml"
-COMPOSE_PROJECT_NAME="project-nomad"
+COMPOSE_FILE="/opt/monad/compose.yml"
+COMPOSE_PROJECT_NAME="monad"
 
 log() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOG_FILE"

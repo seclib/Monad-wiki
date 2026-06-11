@@ -44,7 +44,7 @@ export default function MapComponent({
   const [selectedMarkerId, setSelectedMarkerId] = useState<number | null>(null)
 
   const [scaleUnit, setScaleUnit] = useState<ScaleUnit>(
-    () => (localStorage.getItem('nomad:map-scale-unit') as ScaleUnit) || 'metric'
+    () => (localStorage.getItem('monad:map-scale-unit') as ScaleUnit) || 'metric'
   )
 
   const [cursorLngLat, setCursorLngLat] = useState<{
@@ -80,7 +80,7 @@ export default function MapComponent({
 
   const handleScaleUnitChange = useCallback((unit: ScaleUnit) => {
     setScaleUnit(unit)
-    localStorage.setItem('nomad:map-scale-unit', unit)
+    localStorage.setItem('monad:map-scale-unit', unit)
   }, [])
 
   const handleMouseMove = useCallback(

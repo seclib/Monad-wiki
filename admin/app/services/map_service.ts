@@ -72,7 +72,7 @@ interface IMapService {
 
 export class MapService implements IMapService {
   private readonly mapStoragePath = '/storage/maps'
-  private readonly baseStylesFile = 'nomad-base-styles.json'
+  private readonly baseStylesFile = 'monad-base-styles.json'
   private readonly basemapsAssetsDir = 'basemaps-assets'
   private readonly baseAssetsTarFile = 'base-assets.tar.gz'
   private readonly baseDirPath = join(process.cwd(), this.mapStoragePath)
@@ -857,7 +857,7 @@ export class MapService implements IMapService {
         const specifiedUrl = new URL(specifiedHost)
         if (specifiedUrl.host) return specifiedUrl.host
       } catch {}
-      // Try as a bare host or host:port (e.g. "nomad-box:8080", "192.168.1.1:8080", "example.com")
+      // Try as a bare host or host:port (e.g. "monad-box:8080", "192.168.1.1:8080", "example.com")
       try {
         const specifiedUrl = new URL(`http://${specifiedHost}`)
         if (specifiedUrl.host) return specifiedUrl.host

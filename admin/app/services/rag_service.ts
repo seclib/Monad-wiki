@@ -44,10 +44,10 @@ export class RagService {
   private embeddingModelVerified = false
   private resolvedEmbeddingModel: string | null = null
   public static UPLOADS_STORAGE_PATH = 'storage/kb_uploads'
-  public static CONTENT_COLLECTION_NAME = 'nomad_knowledge_base'
+  public static CONTENT_COLLECTION_NAME = 'monad_knowledge_base'
   public static EMBEDDING_DIMENSION = 768 // Nomic Embed Text v1.5 dimension is 768
   // Upper bound on distinct sources returned by Qdrant's facet API. Real
-  // NOMADs cap out at a few hundred ZIM files + uploaded PDFs; 10k leaves
+  // MONADs cap out at a few hundred ZIM files + uploaded PDFs; 10k leaves
   // generous headroom without paying the cost of an unbounded request.
   public static FACET_SOURCE_LIMIT = 10_000
   public static MODEL_CONTEXT_LENGTH = 2048 // nomic-embed-text has 2K token context
@@ -920,6 +920,7 @@ export class RagService {
           hierarchy: result.hierarchy,
           document_id: result.document_id,
           content_type: result.content_type,
+          source: result.source,
         },
       }))
     } catch (error) {
@@ -1075,7 +1076,7 @@ export class RagService {
 
       // Use Qdrant's facet API to enumerate distinct `source` values in one
       // call. The previous scroll-loop walked every point in the collection
-      // (3M+ on a fully-ingested NOMAD) just to learn the ~40 unique sources,
+      // (3M+ on a fully-ingested MONAD) just to learn the ~40 unique sources,
       // which made this endpoint take 50+ seconds. Facet returns the unique
       // values directly. `exact: true` so the count we'll reuse for warnings
       // matches what would be reported by an exhaustive walk.
@@ -1136,7 +1137,7 @@ export class RagService {
    * banner appears when the user hasn't yet picked a global ingest policy
    * (`rag.defaultIngestPolicy` unset) and the scanner has actually seen at
    * least one embeddable file — i.e., the prompt is actionable, not theoretical
-   * on a freshly-installed empty NOMAD.
+   * on a freshly-installed empty MONAD.
    *
    * Once the user picks a policy (Always or Manual) via the banner buttons or
    * the KB modal toggle, `shouldPrompt` flips to false for good.
@@ -1177,7 +1178,7 @@ export class RagService {
       )
 
       // Per-source chunk count via Qdrant's facet API. Was a full scroll of
-      // every point in the collection, which on a fully-ingested NOMAD takes
+      // every point in the collection, which on a fully-ingested MONAD takes
       // ~50s for a 3M-point KB just to count ~40 sources. Facet returns the
       // distinct values + counts in a single call. `exact: true` because the
       // counts feed Warning A's zero_chunks decision — approximate counts
@@ -1266,7 +1267,7 @@ export class RagService {
         await deleteFileIfExists(resolvedSource)
         logger.info(`[RAG] Deleted uploaded file from disk: ${resolvedSource}`)
       } else {
-        logger.warn(`[RAG] File was removed from knowledge base but doesn't live in Nomad's uploads directory, so it can't be safely removed. Skipping deletion of physical file...`)
+        logger.warn(`[RAG] File was removed from knowledge base but doesn't live in Monad's uploads directory, so it can't be safely removed. Skipping deletion of physical file...`)
       }
 
       // Drop the ingest state row last so the file disappears entirely. Without
@@ -1281,15 +1282,15 @@ export class RagService {
     }
   }
 
-  public async discoverNomadDocs(force?: boolean): Promise<{ success: boolean; message: string }> {
+  public async discoverMonadDocs(force?: boolean): Promise<{ success: boolean; message: string }> {
     try {
       const README_PATH = join(process.cwd(), 'README.md')
       const DOCS_DIR = join(process.cwd(), 'docs')
 
       const alreadyEmbeddedRaw = await KVStore.getValue('rag.docsEmbedded')
       if (alreadyEmbeddedRaw && !force) {
-        logger.info('[RAG] Nomad docs have already been discovered and queued. Skipping.')
-        return { success: true, message: 'Nomad docs have already been discovered and queued. Skipping.' }
+        logger.info('[RAG] Monad docs have already been discovered and queued. Skipping.')
+        return { success: true, message: 'Monad docs have already been discovered and queued. Skipping.' }
       }
 
       const filesToEmbed: Array<{ path: string; source: string }> = []
@@ -1306,7 +1307,7 @@ export class RagService {
         }
       }
 
-      logger.info(`[RAG] Discovered ${filesToEmbed.length} Nomad doc files to embed`)
+      logger.info(`[RAG] Discovered ${filesToEmbed.length} Monad doc files to embed`)
 
       // Import EmbedFileJob dynamically to avoid circular dependencies
       const { EmbedFileJob } = await import('#jobs/embed_file_job')
@@ -1331,10 +1332,10 @@ export class RagService {
       // Update KV store to mark docs as discovered so we don't redo this unnecessarily
       await KVStore.setValue('rag.docsEmbedded', true)
 
-      return { success: true, message: `Nomad docs discovery completed. Dispatched ${filesToEmbed.length} embedding jobs.` }
+      return { success: true, message: `Monad docs discovery completed. Dispatched ${filesToEmbed.length} embedding jobs.` }
     } catch (error) {
-      logger.error('Error discovering Nomad docs:', error)
-      return { success: false, message: 'Error discovering Nomad docs.' }
+      logger.error('Error discovering Monad docs:', error)
+      return { success: false, message: 'Error discovering Monad docs.' }
     }
   }
 
@@ -1524,8 +1525,8 @@ export class RagService {
     try {
       logger.info('[RAG] Starting knowledge base sync scan')
 
-      await this.discoverNomadDocs(true).catch((error) => {
-        logger.error('[RAG] Error during Nomad docs discovery in sync process:', error)
+      await this.discoverMonadDocs(true).catch((error) => {
+        logger.error('[RAG] Error during Monad docs discovery in sync process:', error)
       })
 
       const filesInStorage = await this._discoverKbFiles()
@@ -1674,8 +1675,8 @@ export class RagService {
 
       logger.info('[RAG] Starting full re-embed (per-file replace)')
 
-      await this.discoverNomadDocs(true).catch((error) => {
-        logger.error('[RAG] Error re-running Nomad docs discovery during re-embed:', error)
+      await this.discoverMonadDocs(true).catch((error) => {
+        logger.error('[RAG] Error re-running Monad docs discovery during re-embed:', error)
       })
 
       const filesInStorage = await this._discoverKbFiles()
@@ -1749,7 +1750,7 @@ export class RagService {
   /**
    * Destructive rebuild. Drops the entire Qdrant collection (wiping every
    * point including orphans), recreates it with the correct dimension, clears
-   * the Nomad-docs discovery flag, then dispatches an EmbedFileJob for every
+   * the Monad-docs discovery flag, then dispatches an EmbedFileJob for every
    * file currently on disk.
    *
    * Refuses to run if the embeddings queue already has in-flight work.
@@ -1785,10 +1786,10 @@ export class RagService {
         RagService.EMBEDDING_DIMENSION
       )
 
-      // Force Nomad docs to be re-dispatched.
+      // Force Monad docs to be re-dispatched.
       await KVStore.setValue('rag.docsEmbedded', false)
-      await this.discoverNomadDocs(true).catch((error) => {
-        logger.error('[RAG] Error re-running Nomad docs discovery after reset:', error)
+      await this.discoverMonadDocs(true).catch((error) => {
+        logger.error('[RAG] Error re-running Monad docs discovery after reset:', error)
       })
 
       const filesInStorage = await this._discoverKbFiles()

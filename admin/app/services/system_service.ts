@@ -6,8 +6,8 @@ import logger from '@adonisjs/core/services/logger'
 import si from 'systeminformation'
 import {
   GpuHealthStatus,
-  NomadDiskInfo,
-  NomadDiskInfoRaw,
+  MonadDiskInfo,
+  MonadDiskInfoRaw,
   SystemInformationResponse,
 } from '../../types/system.js'
 import { SERVICE_NAMES } from '../../constants/service_names.js'
@@ -25,7 +25,7 @@ import { invalidateAssistantNameCache } from '../../config/inertia.js'
 @inject()
 export class SystemService {
   private static appVersion: string | null = null
-  private static diskInfoFile = '/storage/nomad-disk-info.json'
+  private static diskInfoFile = '/storage/monad-disk-info.json'
 
   constructor(private dockerService: DockerService) {}
 
@@ -124,7 +124,7 @@ export class SystemService {
         logsOpts.until = startedAtSec + 300 // 5-minute window
       } else {
         logger.warn(
-          `[SystemService] nomad_ollama State.StartedAt missing or invalid (${startedAtRaw ?? 'undefined'}); falling back to tail:500 for inference-compute probe`
+          `[SystemService] monad_ollama State.StartedAt missing or invalid (${startedAtRaw ?? 'undefined'}); falling back to tail:500 for inference-compute probe`
         )
         logsOpts.tail = 500
       }
@@ -381,8 +381,8 @@ export class SystemService {
         si.graphics(),
       ])
 
-      let diskInfo: NomadDiskInfoRaw | undefined
-      let disk: NomadDiskInfo[] = []
+      let diskInfo: MonadDiskInfoRaw | undefined
+      let disk: MonadDiskInfo[] = []
 
       try {
         const diskInfoRawString = await getFile(
@@ -394,7 +394,7 @@ export class SystemService {
           diskInfoRawString
             ? JSON.parse(diskInfoRawString.toString())
             : { diskLayout: { blockdevices: [] }, fsSize: [] }
-        ) as NomadDiskInfoRaw
+        ) as MonadDiskInfoRaw
 
         disk = this.calculateDiskUsage(diskInfo)
       } catch (error) {
@@ -468,13 +468,13 @@ export class SystemService {
 
           // AMD doesn't register a Docker runtime. Detection sources, in priority order:
           //   1. KV 'gpu.type' (set by DockerService._detectGPUType after first Ollama install)
-          //   2. Marker file at /app/storage/.nomad-gpu-type (written by install_nomad.sh)
+          //   2. Marker file at /app/storage/.monad-gpu-type (written by install_monad.sh)
           // The marker file matters because the System page should reflect AMD presence
           // even before AI Assistant has been installed for the first time.
           let savedGpuType: string | null | undefined = await KVStore.getValue('gpu.type') as string | undefined
           if (!savedGpuType) {
             try {
-              savedGpuType = (await readFile('/app/storage/.nomad-gpu-type', 'utf8')).trim()
+              savedGpuType = (await readFile('/app/storage/.monad-gpu-type', 'utf8')).trim()
             } catch {}
           }
           const amdEnabledRaw = await KVStore.getValue('ai.amdGpuAcceleration')
@@ -632,14 +632,14 @@ export class SystemService {
       let latestVersion: string
       if (earlyAccess) {
         const response = await axios.get(
-          'https://api.github.com/repos/Crosstalk-Solutions/project-nomad/releases',
+          'https://api.github.com/repos/seclib/monad/releases',
           { headers: { Accept: 'application/vnd.github+json' }, timeout: 5000 }
         )
         if (!response?.data?.length) throw new Error('No releases found')
         latestVersion = response.data[0].tag_name.replace(/^v/, '').trim()
       } else {
         const response = await axios.get(
-          'https://api.github.com/repos/Crosstalk-Solutions/project-nomad/releases/latest',
+          'https://api.github.com/repos/seclib/monad/releases/latest',
           { headers: { Accept: 'application/vnd.github+json' }, timeout: 5000 }
         )
         if (!response?.data?.tag_name) throw new Error('Invalid response from GitHub API')
@@ -715,7 +715,7 @@ export class SystemService {
     ])
 
     const lines: string[] = [
-      'Project NOMAD Debug Info',
+      'MONAD Debug Info',
       '========================',
       `App Version: ${appVersion}`,
       `Environment: ${environment}`,
@@ -880,7 +880,7 @@ export class SystemService {
     }
   }
 
-  private calculateDiskUsage(diskInfo: NomadDiskInfoRaw): NomadDiskInfo[] {
+  private calculateDiskUsage(diskInfo: MonadDiskInfoRaw): MonadDiskInfo[] {
     const { diskLayout, fsSize } = diskInfo
 
     if (!diskLayout?.blockdevices || !fsSize) {
@@ -889,7 +889,7 @@ export class SystemService {
 
     // Deduplicate: same device path mounted in multiple places (Docker bind-mounts)
     // Keep the entry with the largest size — that's the real partition
-    const deduped = new Map<string, NomadDiskInfoRaw['fsSize'][0]>()
+    const deduped = new Map<string, MonadDiskInfoRaw['fsSize'][0]>()
     for (const entry of fsSize) {
       const existing = deduped.get(entry.fs)
       if (!existing || entry.size > existing.size) {

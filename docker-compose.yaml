@@ -1,0 +1,160 @@
+name: monad
+
+services:
+  admin:
+    image: ghcr.io/crosstalk-solutions/project-nomad:latest
+    pull_policy: always
+    container_name: monad_admin
+    restart: unless-stopped
+
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+    ports:
+      - "4080:8050"
+
+    volumes:
+      - /opt/monad/storage:/app/storage
+      - /var/run/docker.sock:/var/run/docker.sock
+      - monad-update-shared:/app/update-shared
+
+    environment:
+      - NODE_ENV=production
+      - PORT=8050
+      - LOG_LEVEL=info
+      - APP_AUTHOR=seclib
+      - PROJECT_NAME=monad
+
+      # ⚠️ CONFIG OBLIGATOIRE
+      - APP_KEY=ujFhYN8ahpY4ko8PThD/LrByad+4CnLU5HQ9emG/N/o=
+      - URL=http://monad.local:4080
+      - DB_PASSWORD=replaceme
+
+      # 🌐 Serveur
+      - HOST=0.0.0.0
+
+      # 🗄️ Base de données
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_DATABASE=monad
+      - DB_USER=monad_user
+      - DB_NAME=monad
+      - DB_SSL=false
+
+      # ⚡ Redis
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+
+      # 🌍 LOCALISATION (Réunion)
+      - TZ=Indian/Reunion
+      - LANG=fr_FR.UTF-8
+      - LC_ALL=fr_FR.UTF-8
+
+      # 🧠 IA → FR par défaut
+      - SYSTEM_PROMPT=Tu es un assistant IA francophone. Tu réponds toujours en français clair, naturel et structuré sauf demande explicite contraire.
+
+      - DISABLE_COMPRESSION=false
+
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8050/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+  caddy:
+    image: caddy:latest
+    container_name: monad_caddy
+    restart: unless-stopped
+    profiles:
+      - proxy
+    ports:
+      - "80:80"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+    depends_on:
+      admin:
+        condition: service_healthy
+
+  dozzle:
+    image: amir20/dozzle:v10.0
+    container_name: monad_dozzle
+    restart: unless-stopped
+
+    ports:
+      - "9999:8080"
+
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+    environment:
+      - DOZZLE_ENABLE_ACTIONS=false
+      - DOZZLE_ENABLE_SHELL=false
+
+
+  mysql:
+    image: mysql:8.0
+    container_name: monad_mysql
+    restart: unless-stopped
+
+    environment:
+      - MYSQL_ROOT_PASSWORD=replaceme
+      - MYSQL_DATABASE=monad
+      - MYSQL_USER=monad_user
+      - MYSQL_PASSWORD=replaceme
+
+    volumes:
+      - /opt/monad/mysql:/var/lib/mysql
+
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+
+
+  redis:
+    image: redis:7-alpine
+    container_name: monad_redis
+    restart: unless-stopped
+
+    volumes:
+      - /opt/monad/redis:/data
+
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+
+  updater:
+    image: ghcr.io/crosstalk-solutions/project-nomad-sidecar-updater:latest
+    pull_policy: always
+    container_name: monad_updater
+    restart: unless-stopped
+
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /opt/monad:/opt/monad
+      - monad-update-shared:/shared
+
+
+  disk-collector:
+    image: ghcr.io/crosstalk-solutions/project-nomad-disk-collector:latest
+    pull_policy: always
+    container_name: monad_disk_collector
+    restart: unless-stopped
+
+    volumes:
+      - /:/host:ro,rslave
+      - /opt/monad/storage:/storage
+
+
+volumes:
+  monad-update-shared:
+    driver: local

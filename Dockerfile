@@ -61,14 +61,15 @@ RUN set -eux; \
     /usr/local/bin/pmtiles version
 
 # Labels
-LABEL org.opencontainers.image.title="Project N.O.M.A.D" \
-      org.opencontainers.image.description="The Project N.O.M.A.D Official Docker image" \
+LABEL org.opencontainers.image.title="MONAD" \
+      org.opencontainers.image.description="The MONAD Official Docker image" \
       org.opencontainers.image.version="${VERSION}" \
       org.opencontainers.image.created="${BUILD_DATE}" \
       org.opencontainers.image.revision="${VCS_REF}" \
-      org.opencontainers.image.vendor="Crosstalk Solutions, LLC" \
-      org.opencontainers.image.documentation="https://github.com/CrosstalkSolutions/project-nomad/blob/main/README.md" \
-      org.opencontainers.image.source="https://github.com/CrosstalkSolutions/project-nomad" \
+      org.opencontainers.image.vendor="seclib" \
+      org.opencontainers.image.authors="seclib" \
+      org.opencontainers.image.documentation="https://github.com/seclib/monad/blob/main/README.md" \
+      org.opencontainers.image.source="https://github.com/seclib/monad" \
       org.opencontainers.image.licenses="Apache-2.0"
 
 ENV NODE_ENV=production

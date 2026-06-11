@@ -2,7 +2,7 @@ import logger from '@adonisjs/core/services/logger'
 import type { ApplicationService } from '@adonisjs/core/types'
 
 /**
- * Ensures the nomad_qdrant container has the `unless-stopped` restart policy.
+ * Ensures the monad_qdrant container has the `unless-stopped` restart policy.
  *
  * Existing installations may have been created before this policy was enforced
  * in the service seeder. Docker allows updating a container's restart policy

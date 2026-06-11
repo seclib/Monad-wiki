@@ -1,14 +1,14 @@
-export type NomadOllamaModel = {
+export type MonadOllamaModel = {
   id: string
   name: string
   description: string
   estimated_pulls: string
   model_last_updated: string
   first_seen: string
-  tags: NomadOllamaModelTag[]
+  tags: MonadOllamaModelTag[]
 }
 
-export type NomadOllamaModelTag = {
+export type MonadOllamaModelTag = {
   name: string
   size: string
   context: string
@@ -17,10 +17,10 @@ export type NomadOllamaModelTag = {
   thinking: boolean
 }
 
-export type NomadOllamaModelAPIResponse = {
+export type MonadOllamaModelAPIResponse = {
   success: boolean
   message: string
-  models: NomadOllamaModel[]
+  models: MonadOllamaModel[]
 }
 
 export type OllamaChatMessage = {
@@ -45,14 +45,14 @@ export type OllamaChatResponse = {
   done: boolean
 }
 
-export type NomadInstalledModel = {
+export type MonadInstalledModel = {
   name: string
   size: number
   digest?: string
   details?: Record<string, any>
 }
 
-export type NomadChatResponse = {
+export type MonadChatResponse = {
   message: { content: string; thinking?: string }
   done: boolean
   model: string
